@@ -1,6 +1,6 @@
 # Financial Crime Detection
 
-This repo contains work completed in my Master's of Data Science program on the subject of financial crime detection using machine learning
+This repo contains work completed in my Master's of Data Science program across three semesters on the subject of financial crime detection using machine learning
 
 Todos:
 - organize papers alongside the code used for research

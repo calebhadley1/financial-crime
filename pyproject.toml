@@ -18,9 +18,11 @@ classifiers = [
 dependencies = [
     "loguru",
     "mkdocs",
+    "pandas",
     "pip",
     "python-dotenv",
     "ruff",
+    "scikit-learn>=1.9.0",
     "tqdm",
     "typer",
 ]
@@ -38,4 +40,10 @@ extend-select = ["I"]  # Add import sorting
 [tool.ruff.lint.isort]
 known-first-party = ["financial_crime"]
 force-sort-within-sections = true
+
+[dependency-groups]
+dev = [
+    "matplotlib>=3.11.1",
+    "seaborn>=0.13.2",
+]
 

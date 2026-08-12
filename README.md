@@ -8,6 +8,7 @@ Financial Crime detection using Machine Learning
 
 
 Todos:
+- add work on graph based detection using synthetic data: https://github.com/SantanderAI/gen-fraud-graph
 - add work on real time monitoring vs the batch techniques done in these projects
 
 
@@ -56,6 +57,15 @@ Add:
 - drift detection
 - latency measurements
 - model performance over time
+
+## Setup
+### Data
+1. Download the required input dataset from https://www.kaggle.com/datasets/ealtman2019/ibm-transactions-for-anti-money-laundering-aml
+2. Copy the `HI-Small_accounts.csv`, `HI-Small_Patterns.txt` and `HI-Small_Trans.csv` to `data/raw`
+### Python
+3. Run `make create_environment`
+4. Run `source ./.venv/bin/activate` (or `.\\\\.venv\\\\Scripts\\\\activate` for Windows)
+5. Run `make requirements`
 
 ## Project Organization
 

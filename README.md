@@ -77,6 +77,8 @@ Add:
 │                         the creator's initials, and a short `-` delimited description, e.g.
 │                         `1.0-jqp-initial-data-exploration`.
 │
+├── papers             <- Archival academic work done on the subject completed in graduate school
+|
 ├── pyproject.toml     <- Project configuration file with package metadata for 
 │                         financial_crime and configuration for tools like black
 │

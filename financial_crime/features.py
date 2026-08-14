@@ -18,8 +18,12 @@ app = typer.Typer()
 def main(
     input_path: Path = PROCESSED_DATA_DIR / "dataset.csv",
     output_path: Path = PROCESSED_DATA_DIR / "features.csv",
-    # -----------------------------------------
 ):
+    """
+    This feature engineering notebook was created through research from my master's program. 
+    The original notebook can be found at `papers/bu_omds/1_ai_for_leaders/milestone_3/notebooks/ibm_eda.ipynb`. 
+    I have further reduced it to only the required code in `notebooks/0.01-cjjh-ibm-1.ipynb` and converted that into a script here.
+    """
     logger.info("Generating features from dataset...")
 
     df = pd.read_csv(input_path)

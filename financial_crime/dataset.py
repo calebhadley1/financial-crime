@@ -65,6 +65,7 @@ def main(
     )
 
     logger.info(f"Number of unique payment currencies: {len(df['Payment Currency'].unique())}")
+    logger.info(f"Number of unique payment formats: {len(df['Payment Format'].unique())}")
     logger.info("Encoding categorical features...")
     # I need to convert the Receiving Currency, Payment Currency, Payment Format into numeric encodings. I will use One Hot encoding since there is no order and not too many unique values
     categorical_features = [

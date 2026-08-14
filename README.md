@@ -59,13 +59,12 @@ Add:
 - model performance over time
 
 ## Setup
-### Data
 1. Download the required input dataset from https://www.kaggle.com/datasets/ealtman2019/ibm-transactions-for-anti-money-laundering-aml
 2. Copy the `HI-Small_accounts.csv`, `HI-Small_Patterns.txt` and `HI-Small_Trans.csv` to `data/raw`
-### Python
 3. Run `make create_environment`
 4. Run `source ./.venv/bin/activate` (or `.\\\\.venv\\\\Scripts\\\\activate` for Windows)
 5. Run `make requirements`
+6. Run `make data`
 
 ## Project Organization
 

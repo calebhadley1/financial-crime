@@ -95,6 +95,16 @@ def main(
     df["Account_Same"] = (df["Account"] == df["Account.1"]).astype(int)
     df["Bank_Same"] = (df["From Bank"] == df["To Bank"]).astype(int)
 
+    cols_to_drop = [
+        "Timestamp",
+        "From Bank",
+        "Account",
+        "To Bank",
+        "Account.1"
+    ]
+    logger.info(f"Dropping columns that cannot be used for modeling: {cols_to_drop}")
+    df = df.drop(cols_to_drop, axis=1)
+
     logger.info(f"Saving features dataset to {output_path}...")
     df.to_csv(output_path, index=False)
     

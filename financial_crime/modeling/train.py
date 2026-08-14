@@ -11,17 +11,18 @@ app = typer.Typer()
 
 @app.command()
 def main(
-    # ---- REPLACE DEFAULT PATHS AS APPROPRIATE ----
     features_path: Path = PROCESSED_DATA_DIR / "features.csv",
     labels_path: Path = PROCESSED_DATA_DIR / "labels.csv",
     model_path: Path = MODELS_DIR / "model.pkl",
-    # -----------------------------------------
 ):
-    # ---- REPLACE THIS WITH YOUR OWN CODE ----
+    """
+    This feature engineering notebook was created through research from my master's program. 
+    The original notebook can be found at `papers/bu_omds/1_ai_for_leaders/milestone_3/notebooks/ibm_eda.ipynb`. 
+    """
+        
     logger.info("Training some model...")
-    for i in tqdm(range(10), total=10):
-        if i == 5:
-            logger.info("Something happened for iteration 5.")
+
+
     logger.success("Modeling training complete.")
     # -----------------------------------------
 

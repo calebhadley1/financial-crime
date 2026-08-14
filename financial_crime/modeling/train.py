@@ -47,6 +47,7 @@ def main(
     X = df.drop(columns='Is Laundering')
     y = df['Is Laundering']
 
+    logger.info("Undersampling the majority class to address significant class imbalance...")
     logger.info(f"Original dataset shape: {Counter(y)}")
     rus = RandomUnderSampler(sampling_strategy=0.1, random_state=random_state)
     X_resampled, y_resampled = rus.fit_resample(X, y)

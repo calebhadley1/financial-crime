@@ -69,6 +69,8 @@ Add:
 ### Setup Data for Modeling
 6. Run `make data`
 7. Run `typer financial_crime/features.py run`
+### Train Model
+8. Run `typer financial_crime/modeling/train.py run`
 
 ## Project Organization
 

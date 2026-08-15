@@ -17,6 +17,7 @@ classifiers = [
 ]
 dependencies = [
     "fastapi[standard]>=0.141.1",
+    "feast>=0.65.0",
     "imblearn>=0.0",
     "loguru",
     "mkdocs",

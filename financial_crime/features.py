@@ -17,7 +17,8 @@ app = typer.Typer()
 @app.command()
 def main(
     input_path: Path = PROCESSED_DATA_DIR / "dataset.csv",
-    output_path: Path = PROCESSED_DATA_DIR / "features.csv",
+    output_features_path: Path = PROCESSED_DATA_DIR / "features.csv",
+    output_labels_path: Path = PROCESSED_DATA_DIR / "labels.csv"
 ):
     """
     This feature engineering notebook was created through research from my master's program. 
@@ -74,23 +75,6 @@ def main(
         lambda row: row["Amount Paid"] * currency_map[row["Payment Currency"]], axis=1
     )
 
-    logger.info(f"Number of unique payment currencies: {len(df['Payment Currency'].unique())}")
-    logger.info(f"Number of unique payment formats: {len(df['Payment Format'].unique())}")
-    logger.info("Encoding categorical features...")
-    # I need to convert the Receiving Currency, Payment Currency, Payment Format into numeric encodings. I will use One Hot encoding since there is no order and not too many unique values
-    categorical_features = [
-        "Receiving Currency",
-        "Payment Currency",
-        "Payment Format",
-    ]
-
-    encoder = OneHotEncoder(sparse_output=False, handle_unknown="ignore")
-    one_hot_encoded = encoder.fit_transform(df[categorical_features])
-    one_hot_df = pd.DataFrame(
-        one_hot_encoded, columns=encoder.get_feature_names_out(categorical_features)
-    )
-    df = pd.concat([df.drop(categorical_features, axis=1), one_hot_df], axis=1)
-
     logger.info("Calculating account and bank match indicators...")
     df["Account_Same"] = (df["Account"] == df["Account.1"]).astype(int)
     df["Bank_Same"] = (df["From Bank"] == df["To Bank"]).astype(int)
@@ -105,8 +89,11 @@ def main(
     logger.info(f"Dropping columns that cannot be used for modeling: {cols_to_drop}")
     df = df.drop(cols_to_drop, axis=1)
 
-    logger.info(f"Saving features dataset to {output_path}...")
-    df.to_csv(output_path, index=False)
+    logger.info(f"Saving features dataset to {output_features_path}...")
+    df.drop("Is Laundering", axis=1).to_csv(output_features_path, index=False)
+
+    logger.info(f"Saving labels dataset to {output_labels_path}...")
+    df[["Is Laundering"]].to_csv(output_labels_path, index=False)
     
     logger.success("Features generation complete.")
 

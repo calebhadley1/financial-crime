@@ -71,6 +71,8 @@ Add:
 7. Run `typer financial_crime/features.py run`
 ### Train Model
 8. Run `typer financial_crime/modeling/train.py run`
+### Get Model Predictions
+9. Run `typer financial_crime/modeling/predict.py run`
 
 ## Project Organization
 
@@ -111,11 +113,15 @@ Add:
     │
     ├── __init__.py             <- Makes financial_crime a Python module
     │
+    |── pipelines               <- Training/inference abstractions
+    |
+    |── transformers            <- Feature Engineering and Preprocessing abstractions
+    |
     ├── config.py               <- Store useful variables and configuration
     │
     ├── dataset.py              <- Scripts to download or generate data
     │
-    ├── features.py             <- Code to create features for modeling
+    ├── features.py             <- Code to create features for exploratory modeling
     │
     ├── modeling                
     │   ├── __init__.py 

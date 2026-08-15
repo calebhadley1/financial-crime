@@ -60,19 +60,40 @@ Add:
 
 ## Setup
 ### Download Source Data
-1. Download the required input dataset from https://www.kaggle.com/datasets/ealtman2019/ibm-transactions-for-anti-money-laundering-aml
-2. Copy the `HI-Small_accounts.csv`, `HI-Small_Patterns.txt` and `HI-Small_Trans.csv` to `data/raw`
+- Download the required input dataset from https://www.kaggle.com/datasets/ealtman2019/ibm-transactions-for-anti-money-laundering-aml
+- Copy the `HI-Small_accounts.csv`, `HI-Small_Patterns.txt` and `HI-Small_Trans.csv` to `data/raw`
 ### Python Environment
-3. Run `make create_environment`
-4. Run `source ./.venv/bin/activate` (or `.\\\\.venv\\\\Scripts\\\\activate` for Windows)
-5. Run `make requirements`
+- Run `make create_environment`
+- Run `source ./.venv/bin/activate` (or `.\\\\.venv\\\\Scripts\\\\activate` for Windows)
+- Run `make requirements`
 ### Get Features for EDA
-6. Run `make data`
-7. Run `typer financial_crime/features.py run`
+- Run `make data`
+- Run `typer financial_crime/features.py run`
 ### Train Model
-8. Run `typer financial_crime/modeling/train.py run`
+- Run `typer financial_crime/modeling/train.py run`
 ### Get Model Predictions
-9. Run `typer financial_crime/modeling/predict.py run`
+- Run `typer financial_crime/modeling/predict.py run`
+### API
+- Run the app with `uv run fastapi dev` in the `financial_crime/api` directory
+- Make a sample request with the following payload:
+```
+{
+  "raw_features": [
+    {
+      "Timestamp": "2022/09/01 00:20",
+      "From Bank": "10",
+      "Account": "8000EBD30",
+      "To Bank": "10",
+      "Account.1": "8000EBD30",
+      "Amount Received": 3697.34,
+      "Receiving Currency": "US Dollar",
+      "Amount Paid": 3697.34,
+      "Payment Currency": "US Dollar",
+      "Payment Format": "Reinvestment"
+    }
+  ]
+}
+```
 
 ## Project Organization
 
@@ -113,18 +134,17 @@ Add:
     │
     ├── __init__.py             <- Makes financial_crime a Python module
     │
-    |── pipelines               <- Training/inference abstractions
-    |
-    |── transformers            <- Feature Engineering and Preprocessing abstractions
-    |
     ├── config.py               <- Store useful variables and configuration
     │
     ├── dataset.py              <- Scripts to download or generate data
     │
     ├── features.py             <- Code to create features for exploratory modeling
     │
-    ├── modeling                
+    |── api                     <- Live API for model inference
+    ├── modeling    
     │   ├── __init__.py 
+    |   ├── pipelines           <- Training/inference abstractions
+    |   ├── transformers        <- Feature Engineering and Preprocessing abstractions
     │   ├── predict.py          <- Code to run model inference with trained models          
     │   └── train.py            <- Code to train models
     │

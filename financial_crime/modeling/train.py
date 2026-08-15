@@ -1,102 +1,109 @@
 from pathlib import Path
-
-from loguru import logger
-from sklearn.compose import make_column_transformer
-from tqdm import tqdm
-import typer
-import pandas as pd
-from imblearn.under_sampling import RandomUnderSampler
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import classification_report
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
-import pandas as pd
-from imblearn.under_sampling import RandomUnderSampler
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import classification_report
-from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import classification_report
-from sklearn.ensemble import GradientBoostingClassifier
-from collections import Counter
 import pickle
-from sklearn.pipeline import make_pipeline
-from financial_crime.config import MODELS_DIR, PROCESSED_DATA_DIR
+
+import pandas as pd
+import typer
+from loguru import logger
+from sklearn.ensemble import GradientBoostingClassifier
+
+from financial_crime.config import (
+    MODELS_DIR,
+    PROCESSED_DATA_DIR,
+    RANDOM_STATE,
+    MODEL_N_ESTIMATORS,
+    MODEL_MAX_DEPTH,
+    SAMPLING_STRATEGY,
+    TEST_SIZE,
+)
+from financial_crime.modeling.pipelines.training_pipeline import TrainingPipeline
 
 app = typer.Typer()
-
-random_state = 42
 
 
 @app.command()
 def main(
     # Input
-    features_path: Path = PROCESSED_DATA_DIR / "features.csv",
-    labels_path: Path = PROCESSED_DATA_DIR / "labels.csv",
+    raw_features_path: Path = PROCESSED_DATA_DIR / "dataset.csv",
+    raw_labels_path: Path = None,
     # Output
-    model_path: Path = MODELS_DIR / "model.pkl",
+    pipeline_dir: Path = MODELS_DIR / "pipeline",
     test_features_path: Path = PROCESSED_DATA_DIR / "test_features.csv",
     test_labels_path: Path = PROCESSED_DATA_DIR / "test_labels.csv",
 ):
     """
-    This feature engineering notebook was created through research from my master's program. 
-    The original notebook can be found at `papers/bu_omds/2_capstone/milestone_2/notebooks/Week9.ipynb`.
-    I have further reduced it to only the required code in `notebooks/3.01-cjjh-ibm.ipynb` and converted that into a script here.
+    Train the complete ML pipeline: split → feature engineering → preprocessing → model.
+    
+    This script ensures no data leakage by using TrainingPipeline orchestration:
+    1. Splitting train/test first (on raw data)
+    2. Fitting all transformers only on training data
+    3. Applying transformations to both train and test consistently
+    4. Resampling only on training data
+    
+    Args:
+        raw_features_path: Path to raw dataset CSV (must include "Is Laundering" column)
+        raw_labels_path: Optional path to pre-extracted labels CSV. If not provided,
+                        "Is Laundering" column will be extracted from raw_features_path.
+        pipeline_dir: Directory to save trained pipeline
+        test_features_path: Path to save raw test features
+        test_labels_path: Path to save test labels
     """
         
-    logger.info("Training hyperparameter-tuned GradientBoostingClassifier with StandardScaling...")
+    logger.info("Training ML pipeline with feature engineering, preprocessing, and model...")
 
-    logger.info(f"Loading features from {features_path}...")
-    X = pd.read_csv(features_path)
+    logger.info(f"Loading raw features from {raw_features_path}...")
+    X_raw = pd.read_csv(raw_features_path)
 
-    logger.info(f"Loading labels from {labels_path}...")
-    y = pd.read_csv(labels_path)
+    # Extract or load labels
+    if raw_labels_path is not None and Path(raw_labels_path).exists():
+        logger.info(f"Loading pre-extracted labels from {raw_labels_path}...")
+        y = pd.read_csv(raw_labels_path)
+    else:
+        logger.info("Extracting labels from 'Is Laundering' column in raw features...")
+        if "Is Laundering" not in X_raw.columns:
+            raise ValueError(
+                "Column 'Is Laundering' not found in raw features. "
+                "Provide raw_labels_path or ensure dataset contains this column."
+            )
+        y = X_raw[["Is Laundering"]]
 
-    logger.info("Undersampling the majority class to address significant class imbalance...")
-    logger.info(f"Original dataset shape: {Counter(y)}")
-    rus = RandomUnderSampler(sampling_strategy=0.1, random_state=random_state)
-    X_resampled, y_resampled = rus.fit_resample(X, y)
-    logger.info(f"Resampled dataset shape: {Counter(y_resampled)}")
-
-    logger.info("Creating 80/20 train/test split...")
-    X_train, X_test, y_train, y_test = train_test_split(
-        X_resampled, 
-        y_resampled, 
-        test_size=0.2, 
-        stratify=y_resampled,  # Maintains class distribution
-        random_state=random_state
+    # Initialize model
+    logger.info(
+        f"Initializing GradientBoostingClassifier with "
+        f"n_estimators={MODEL_N_ESTIMATORS}, max_depth={MODEL_MAX_DEPTH}..."
+    )
+    model = GradientBoostingClassifier(
+        n_estimators=MODEL_N_ESTIMATORS,
+        max_depth=MODEL_MAX_DEPTH,
+        random_state=RANDOM_STATE
     )
 
-    # Persisting test data for later evaluation
-    logger.info(f"Saving test features to {test_features_path}")
-    X_test.to_csv(test_features_path, index=False)
+    # Execute training pipeline orchestration
+    training_pipeline = TrainingPipeline(
+        test_size=TEST_SIZE,
+        sampling_strategy=SAMPLING_STRATEGY,
+        random_state=RANDOM_STATE
+    )
+    
+    (
+        ml_pipeline,
+        X_train_preprocessed,
+        y_train_resampled,
+        X_test_raw,
+        X_test_preprocessed,
+        y_test,
+    ) = training_pipeline.train(X_raw, y, model)
+
+    # Persist raw test data for evaluation (not preprocessed)
+    logger.info(f"Saving raw test features to {test_features_path}")
+    X_test_raw.to_csv(test_features_path, index=False)
     logger.info(f"Saving test labels to {test_labels_path}")
     y_test.to_csv(test_labels_path, index=False)
 
-    # One Hot encoding for categorical features
-    categorical_features = ["Receiving Currency", "Payment Currency", "Payment Format"]
-    preprocessor = make_column_transformer(
-        (OneHotEncoder(sparse_output=False, handle_unknown="ignore"), categorical_features),
-        remainder="passthrough"
-    )
+    # Save complete pipeline
+    logger.info("Saving complete ML pipeline...")
+    ml_pipeline.save(pipeline_dir)
 
-    logger.info("Fitting StandardScaler + GradientBoostingClassifier pipeline with n_estimators=150, max_depth=3...")
-    pipeline = make_pipeline(
-        preprocessor,
-        StandardScaler(),
-        GradientBoostingClassifier(
-            n_estimators=150,
-            max_depth=3,
-            random_state=random_state
-        )
-    )
-    pipeline.fit(X_train, y_train)
-
-    logger.info("Saving trained pipeline...")
-    with open(model_path, "wb") as file:
-        pickle.dump(pipeline, file)
-
-    logger.success("Modeling training complete.")
+    logger.success("ML pipeline training complete.")
 
 
 if __name__ == "__main__":

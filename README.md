@@ -11,12 +11,14 @@ This projects contains both acadmic data science work and production ready ML sy
 Major topics covered:
 - Academic data science work on exploratory data analysis and modeling can be found [here](papers\README.md)
 - Reusable feature generation, training/inference pipelines, model persistance
-- Model serving with FastAPI
+- Model serving with FastAPI + Docker
 - Feature Store [TODO]
-- Realtime Kafka Streaming [TODO]
+- Real-time Kafka Streaming for Model Inference [TODO]
+- Batch PySpark Pipelines for Historical Feature Generation
 - Model Versioning [TODO]
-- Docker [TODO]
-
+- Monitoring (Drift, latency, distributions) [TODO]
+- Automated tests [TODO]
+- CI/CD [TODO]
 
 
 
@@ -52,18 +54,6 @@ Transactions ──────►│ Kafka / Queue│
              ▼                         ▼
        Monitoring              Alert / Review
 
-Add:
-- offline vs. online inference
-- batch vs. streaming
-- feature leakage prevention
-- model versioning
-- Docker
-- automated tests
-- CI/CD
-- monitoring
-- drift detection
-- latency measurements
-- model performance over time
 
 ## Setup
 ### Download Source Data

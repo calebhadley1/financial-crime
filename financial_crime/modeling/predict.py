@@ -42,6 +42,11 @@ def main(
     logger.info(f"Loading raw features from {raw_features_path}...")
     df = pd.read_csv(raw_features_path)
 
+    # Guard against accidental label leakage when reusing a raw dataset.
+    if "Is Laundering" in df.columns:
+        logger.warning("Dropping 'Is Laundering' from input features before inference to avoid target leakage.")
+        df = df.drop(columns=["Is Laundering"])
+
     logger.info(f"Loading pipeline from {pipeline_dir}...")
     pipeline = InferencePipeline.load(pipeline_dir)
 

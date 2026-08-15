@@ -57,6 +57,8 @@ def main(
     if raw_labels_path is not None and Path(raw_labels_path).exists():
         logger.info(f"Loading pre-extracted labels from {raw_labels_path}...")
         y = pd.read_csv(raw_labels_path)
+        if "Is Laundering" not in y.columns:
+            raise ValueError("Loaded label file does not contain 'Is Laundering' column.")
     else:
         logger.info("Extracting labels from 'Is Laundering' column in raw features...")
         if "Is Laundering" not in X_raw.columns:
@@ -65,6 +67,10 @@ def main(
                 "Provide raw_labels_path or ensure dataset contains this column."
             )
         y = X_raw[["Is Laundering"]]
+
+    # Drop the target column from feature inputs before any modeling step.
+    if "Is Laundering" in X_raw.columns:
+        X_raw = X_raw.drop(columns=["Is Laundering"]) 
 
     # Initialize model
     logger.info(

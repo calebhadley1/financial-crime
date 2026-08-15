@@ -55,9 +55,6 @@ def main(
     logger.info("Generating engineered features from raw dataset...")
 
     df = pd.read_csv(input_path)
-    
-    non_matching_currency_rows = df[df["Receiving Currency"] != df["Payment Currency"]]
-    logger.info(f"Number of rows with non-matching currencies: {len(non_matching_currency_rows)}")
 
     logger.info("Applying feature engineering...")
     feature_engineer = FeatureEngineer()

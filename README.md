@@ -6,6 +6,19 @@
 
 Financial Crime detection using Machine Learning
 
+This projects contains both acadmic data science work and production ready ML systems
+
+Major topics covered:
+- Academic data science work on exploratory data analysis and modeling can be found [here](papers\README.md)
+- Reusable feature generation, training/inference pipelines, model persistance
+- Model serving with FastAPI
+- Feature Store [TODO]
+- Realtime Kafka Streaming [TODO]
+- Model Versioning [TODO]
+- Docker [TODO]
+
+
+
 
 Todos:
 - add work on graph based detection using synthetic data: https://github.com/SantanderAI/gen-fraud-graph
@@ -40,16 +53,10 @@ Transactions ──────►│ Kafka / Queue│
        Monitoring              Alert / Review
 
 Add:
-- feature engineering
-- class imbalance
-- precision/recall tradeoffs
-- threshold selection
-- model calibration
 - offline vs. online inference
 - batch vs. streaming
 - feature leakage prevention
 - model versioning
-- API serving
 - Docker
 - automated tests
 - CI/CD
@@ -74,8 +81,8 @@ Add:
 ### Get Model Predictions
 - Run `typer financial_crime/modeling/predict.py run`
 ### API
-- Run the app with `uv run fastapi dev` in the `financial_crime/api` directory
-- Make a sample request with the following payload:
+- Run the app with docker using the typical `docker compose up --build`
+- Make a sample request @ localhost:8000/docs with the following payload:
 ```
 {
   "raw_features": [

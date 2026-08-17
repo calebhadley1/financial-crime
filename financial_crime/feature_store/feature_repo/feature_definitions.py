@@ -35,6 +35,8 @@ transaction_source = FileSource(
     timestamp_field="event_timestamp",
 )
 
+# For real time streaming, we will use a PushSource. This allows us to push data into Feast from an external source, 
+# such as a Kafka topic or a REST API.
 transaction_push_source = PushSource(
     name="transaction_push_source",
     batch_source=transaction_source,

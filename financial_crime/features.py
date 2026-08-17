@@ -22,7 +22,7 @@ import pandas as pd
 from loguru import logger
 import typer
 
-from financial_crime.config import PROCESSED_DATA_DIR
+from financial_crime.config import MODELS_DIR, PROCESSED_DATA_DIR
 from financial_crime.modeling.transformers.feature_engineering import FeatureEngineer
 
 app = typer.Typer()
@@ -31,20 +31,19 @@ app = typer.Typer()
 @app.command()
 def main(
     input_path: Path = PROCESSED_DATA_DIR / "dataset.csv",
-    output_features_path: Path = PROCESSED_DATA_DIR / "features.csv",
-    output_labels_path: Path = PROCESSED_DATA_DIR / "labels.csv"
+    output_features_path: Path = PROCESSED_DATA_DIR / "features.parquet",
+    output_labels_path: Path = PROCESSED_DATA_DIR / "labels.parquet",
+    output_feature_engineer_path: Path = MODELS_DIR / "pipeline" / "feature_engineer.pkl"
 ):
     """
     Extract engineered features and labels from raw dataset.
     
-    This creates intermediate CSV files for exploratory analysis.
-    
-    WARNING: These intermediate features.csv and labels.csv files should NOT be used
-    with train.py, as train.py expects raw data and applies all transformations
-    internally to prevent data leakage.
+    This produces feature and label CSVs which can be:
+    1. Loaded into the Feature Store
+    2. Used for exploratory data analysis
     
     Original notebooks:
-    - Feature research: papers/bu_omds/1_ai_for_leaders/milestone_3/notebooks/ibm_eda.ipynb
+    - Research: papers/bu_omds/1_ai_for_leaders/milestone_3/notebooks/ibm_eda.ipynb
     - Reduced notebook: notebooks/1.01-cjjh-ibm.ipynb
     
     Args:
@@ -60,14 +59,19 @@ def main(
     feature_engineer = FeatureEngineer()
     df_engineered = feature_engineer.fit_transform(df)
 
+    X = df_engineered.drop(columns=["Is Laundering", "labeler"])
+    y = df_engineered[["ID", "event_timestamp", "Is Laundering", "labeler"]]
+
     logger.info(f"Saving engineered features dataset to {output_features_path}...")
-    df_engineered.to_csv(output_features_path, index=False)
+    X.to_parquet(output_features_path, index=False)
 
     logger.info(f"Saving labels dataset to {output_labels_path}...")
-    df_engineered[["ID", "Is Laundering"]].to_csv(output_labels_path, index=False)
-    
+    y.to_parquet(output_labels_path, index=False)
+
+    logger.info(f"Saving feature engineer to {output_feature_engineer_path}...")
+    feature_engineer.save(output_feature_engineer_path)
+
     logger.success("Feature extraction complete.")
-    logger.warning("These intermediate files are for EDA only. Use train.py for the full pipeline.")
 
 
 if __name__ == "__main__":

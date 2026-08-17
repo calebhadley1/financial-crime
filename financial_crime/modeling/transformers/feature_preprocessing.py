@@ -7,6 +7,7 @@ used consistently across training and inference.
 
 from pathlib import Path
 import pickle
+from loguru import logger
 
 import pandas as pd
 from sklearn.compose import make_column_transformer
@@ -71,6 +72,21 @@ class FeaturePreprocessor:
         """
         if not self._is_fitted:
             raise ValueError("Preprocessor must be fitted before transforming. Call fit() first.")
+
+        # Drop columns that cannot be used for modeling
+        # TODO: Make this a const or a whitelist instead of blacklist
+        cols_to_drop = [
+            "ID",
+            "event_timestamp",
+            "labeler",
+            "Timestamp",
+            "From Bank",
+            "Account",
+            "To Bank",
+            "Account.1"
+        ]
+        logger.debug(f"Dropping columns: {cols_to_drop}")
+        X = X.drop(cols_to_drop, axis=1, errors='ignore')
         
         X_encoded = self.preprocessor.transform(X)
         X_scaled = self.scaler.transform(X_encoded)

@@ -70,9 +70,17 @@ class FeatureEngineer:
             
         X = X.copy()
 
-        # Add ID column using rnadom UUIDs for unique transaction identification
+        # Add ID column using random UUIDs for unique transaction identification
         logger.debug("Adding ID column for unique transaction identification...")
         X["ID"] = [str(uuid.uuid4()) for _ in range(len(X))]
+
+        # Add datetime column for Feature Store
+        logger.debug("Adding event_timestamp column for Feature Store...")
+        X['event_timestamp'] = pd.to_datetime(X['Timestamp'])
+
+        # Add labeler column for Feature Store
+        logger.debug("Adding labeler column for Feature Store...")
+        X['labeler'] = 'mle_team'
         
         # Currency conversion
         logger.debug("Converting all currencies to USD...")
@@ -89,18 +97,6 @@ class FeatureEngineer:
         logger.debug("Calculating account and bank match indicators...")
         X["Account_Same"] = (X["Account"] == X["Account.1"]).astype(int)
         X["Bank_Same"] = (X["From Bank"] == X["To Bank"]).astype(int)
-
-        # TODO: I think this dropping should happen in modeling stage since we want these in the feature store
-        # Drop columns that cannot be used for modeling
-        # cols_to_drop = [
-        #     "Timestamp",
-        #     "From Bank",
-        #     "Account",
-        #     "To Bank",
-        #     "Account.1"
-        # ]
-        # logger.debug(f"Dropping columns: {cols_to_drop}")
-        # X = X.drop(cols_to_drop, axis=1)
         
         return X
     

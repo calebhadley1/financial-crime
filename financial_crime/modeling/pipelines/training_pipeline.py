@@ -42,6 +42,7 @@ class TrainingPipeline:
     
     def __init__(
         self,
+        feature_engineer: FeatureEngineer,
         test_size: float = TEST_SIZE,
         sampling_strategy: float = SAMPLING_STRATEGY,
         random_state: int = RANDOM_STATE,
@@ -57,7 +58,7 @@ class TrainingPipeline:
         self.sampling_strategy = sampling_strategy
         self.random_state = random_state
         
-        self.feature_engineer = None
+        self.feature_engineer = feature_engineer
         self.preprocessor = None
         self.resampler = None
     
@@ -89,43 +90,6 @@ class TrainingPipeline:
             f"Training set shape: {X_train_raw.shape}, Test set shape: {X_test_raw.shape}"
         )
         return X_train_raw, X_test_raw, y_train, y_test
-    
-    def engineer_features(
-        self,
-        X_train_raw: pd.DataFrame,
-        X_test_raw: pd.DataFrame,
-        fit: bool = True
-    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
-        """Apply feature engineering to train and test data.
-        
-        Args:
-            X_train_raw: Raw training features
-            X_test_raw: Raw test features
-            fit: Whether to fit the feature engineer on training data (default True)
-            
-        Returns:
-            Tuple of (X_train_engineered, X_test_engineered)
-        """
-        logger.info("Applying feature engineering...")
-        
-        if fit:
-            self.feature_engineer = FeatureEngineer()
-            X_train_engineered = self.feature_engineer.fit_transform(X_train_raw)
-            logger.debug("FeatureEngineer fitted on training data")
-        else:
-            if self.feature_engineer is None:
-                raise ValueError(
-                    "FeatureEngineer not fitted. Set fit=True or provide a fitted engineer."
-                )
-            X_train_engineered = self.feature_engineer.transform(X_train_raw)
-        
-        X_test_engineered = self.feature_engineer.transform(X_test_raw)
-        logger.info(
-            f"Features after engineering: shape={X_train_engineered.shape}, "
-            f"columns={list(X_train_engineered.columns)}"
-        )
-        
-        return X_train_engineered, X_test_engineered
     
     def handle_class_imbalance(
         self,
@@ -174,6 +138,21 @@ class TrainingPipeline:
             Tuple of (X_train_preprocessed, X_test_preprocessed)
         """
         logger.info("Applying feature preprocessing (encoding + scaling)...")
+
+        # Drop any columns that are not needed for modeling (e.g., identifiers)
+        # TODO: Find a better place to define and perform this col drop step
+        cols_to_drop = [
+            "ID",
+            "event_timestamp",
+            "Timestamp",
+            "To Bank",
+            "From Bank",
+            "Account",
+            "Account.1",
+            "labeler"
+        ]
+        X_train = X_train.drop(columns=cols_to_drop, errors='ignore')
+        X_test = X_test.drop(columns=cols_to_drop, errors='ignore')
         
         if fit:
             self.preprocessor = FeaturePreprocessor()
@@ -193,7 +172,7 @@ class TrainingPipeline:
     
     def train(
         self,
-        X_raw: pd.DataFrame,
+        X: pd.DataFrame,
         y: pd.DataFrame,
         model
     ) -> Tuple[InferencePipeline, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
@@ -202,15 +181,15 @@ class TrainingPipeline:
         Orchestrates: split → engineer → resample → preprocess → train model
         
         Args:
-            X_raw: Raw features DataFrame
+            X: Features DataFrame
             y: Labels DataFrame
             model: Unfitted sklearn model to train
             
         Returns:
-            Tuple of (pipeline, X_train_preprocessed, y_train_resampled, X_test_raw, X_test_preprocessed, y_test)
+            Tuple of (pipeline, X_train_preprocessed, y_train_resampled, X_test, X_test_preprocessed, y_test)
             
         Note:
-            X_test_raw is returned for saving to disk (for model evaluation/reproduction)
+            X_test is returned for saving to disk (for model evaluation/reproduction)
             X_test_preprocessed is preprocessed but NOT resampled.
             y_test is the original (un-resampled) test labels.
         """
@@ -219,17 +198,14 @@ class TrainingPipeline:
         logger.info("="*60)
         
         # Step 1: Split data
-        X_train_raw, X_test_raw, y_train, y_test = self.split_data(X_raw, y)
-        
-        # Step 2: Feature engineering
-        X_train_eng, X_test_eng = self.engineer_features(X_train_raw, X_test_raw, fit=True)
-        
+        X_train, X_test, y_train, y_test = self.split_data(X, y)
+                
         # Step 3: Handle class imbalance (training data only)
-        X_train_resampled, y_train_resampled = self.handle_class_imbalance(X_train_eng, y_train)
+        X_train_resampled, y_train_resampled = self.handle_class_imbalance(X_train, y_train)
         
         # Step 4: Preprocessing
         X_train_preprocessed, X_test_preprocessed = self.preprocess_features(
-            X_train_resampled, X_test_eng, fit=True
+            X_train_resampled, X_test, fit=True
         )
         
         # Step 5: Train model
@@ -245,4 +221,4 @@ class TrainingPipeline:
         logger.info("Training workflow complete")
         logger.info("="*60)
         
-        return pipeline, X_train_preprocessed, y_train_resampled, X_test_raw, X_test_preprocessed, y_test
+        return pipeline, X_train_preprocessed, y_train_resampled, X_test, X_test_preprocessed, y_test

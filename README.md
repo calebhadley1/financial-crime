@@ -92,6 +92,17 @@ Transactions ──────►│ Kafka / Queue│
 }
 ```
 
+## Modeling Results
+TODO: boost positive class precision
+              precision    recall  f1-score   support
+
+           0       1.00      0.98      0.99   1014634
+           1       0.03      0.66      0.05      1035
+
+    accuracy                           0.98   1015669
+   macro avg       0.51      0.82      0.52   1015669
+weighted avg       1.00      0.98      0.99   1015669
+
 ## Project Organization
 
 ```

@@ -1,6 +1,5 @@
 from datetime import timedelta
 
-
 from feast import (
     ConflictPolicy,
     Entity,
@@ -35,7 +34,7 @@ transaction_source = FileSource(
     timestamp_field="event_timestamp",
 )
 
-# For real time streaming, we will use a PushSource. This allows us to push data into Feast from an external source, 
+# For real time streaming, we will use a PushSource. This allows us to push data into Feast from an external source,
 # such as a Kafka topic or a REST API.
 transaction_push_source = PushSource(
     name="transaction_push_source",
@@ -47,7 +46,7 @@ transaction_push_source = PushSource(
 transaction_fv = FeatureView(
     name="transaction",
     entities=[transaction],
-    ttl=timedelta(), # Live forever since this is a static dataset
+    ttl=timedelta(),  # Live forever since this is a static dataset
     schema=[
         Field(name="ID", dtype=String),
         Field(name="event_timestamp", dtype=UnixTimestamp),
@@ -67,7 +66,7 @@ transaction_fv = FeatureView(
         Field(name="Bank_Same", dtype=Int64),
     ],
     online=True,
-    source=transaction_push_source
+    source=transaction_push_source,
 )
 
 # --- Label Views ---
@@ -96,7 +95,7 @@ transaction_fraud_labels = LabelView(
     description="Human fraud labels for transactional data - used for model training and evaluation",
     tags={
         "feast.io/labeling-method": "table",
-        "feast.io/field-role:is_default": "expectation", # Ground truth labels
+        "feast.io/field-role:is_default": "expectation",  # Ground truth labels
     },
 )
 
@@ -104,10 +103,8 @@ transaction_fraud_labels = LabelView(
 transaction_v1 = FeatureService(
     name="transaction_v1",
     features=[
-        transaction_fv, # Selects all features from the feature view
-        transaction_fraud_labels, # Include labels for training
+        transaction_fv,  # Selects all features from the feature view
+        transaction_fraud_labels,  # Include labels for training
     ],
-    logging_config=LoggingConfig(
-        destination=FileLoggingDestination(path="data")
-    ),
+    logging_config=LoggingConfig(destination=FileLoggingDestination(path="data")),
 )

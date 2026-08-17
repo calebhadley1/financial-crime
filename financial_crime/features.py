@@ -18,8 +18,8 @@ For the standard training workflow, use:
 
 from pathlib import Path
 
-import pandas as pd
 from loguru import logger
+import pandas as pd
 import typer
 
 from financial_crime.config import MODELS_DIR, PROCESSED_DATA_DIR
@@ -35,20 +35,20 @@ def main(
     # output
     output_features_path: Path = PROCESSED_DATA_DIR / "features.parquet",
     output_labels_path: Path = PROCESSED_DATA_DIR / "labels.parquet",
-    output_feature_engineer_path: Path = MODELS_DIR / "pipeline" / "feature_engineer.pkl"
+    output_feature_engineer_path: Path = MODELS_DIR / "pipeline" / "feature_engineer.pkl",
 ):
     """
     Extract engineered features and labels from raw dataset. Used prior to training/inference
     to ensure features are ready for modeling
-    
+
     This produces feature and label CSVs which can be:
     1. Loaded into the Feature Store
     2. Used for exploratory data analysis
-    
+
     Original notebooks:
     - Research: papers/bu_omds/1_ai_for_leaders/milestone_3/notebooks/ibm_eda.ipynb
     - Reduced notebook: notebooks/1.01-cjjh-ibm.ipynb
-    
+
     Args:
         input_path: Path to raw dataset CSV
         output_features_path: Path to save engineered features CSV

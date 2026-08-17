@@ -1,15 +1,19 @@
 from functools import lru_cache
 from typing import Any
-import pandas as pd
 
 from fastapi import FastAPI
+import pandas as pd
 from pydantic import BaseModel
+
 from financial_crime.config import MODELS_DIR
 from financial_crime.modeling.pipelines.inference_pipeline import InferencePipeline
+
 app = FastAPI()
+
 
 class PredictionRequest(BaseModel):
     raw_features: list[dict[Any, Any]]
+
 
 class PredictionResponse(BaseModel):
     predictions: list[int]
@@ -26,7 +30,7 @@ def load_pipeline():
 def predict(request: PredictionRequest) -> PredictionResponse:
     """
     Perform inference using the trained ML pipeline.
-    
+
     The pipeline handles the complete transformation:
     raw data → feature engineering → preprocessing → model prediction
     """
@@ -40,4 +44,3 @@ def predict(request: PredictionRequest) -> PredictionResponse:
     preds = pipeline.predict(df)
 
     return PredictionResponse(predictions=preds.tolist())
-

@@ -8,11 +8,12 @@ Financial Crime detection using Machine Learning
 
 This projects contains both acadmic data science work and production ready ML systems
 
+## Overview
 Major topics covered:
 - Academic data science work on exploratory data analysis and modeling can be found [here](papers\README.md)
 - Reusable feature generation, training/inference pipelines, model persistance
 - Model serving with FastAPI + Docker
-- Feature Store [TODO]
+- Feature Store (Feast)
 - Real-time Kafka Streaming for Model Inference [TODO]
 - Batch PySpark Pipelines for Historical Feature Generation
 - Model Versioning [TODO]
@@ -20,6 +21,20 @@ Major topics covered:
 - Automated tests [TODO]
 - CI/CD [TODO]
 
+## Architecture
+```mermaid
+graph TD;
+    A[Raw Features + Optional Labels] --> B(Feature Engineering Pipeline);
+    C[Holdout Raw Features + Labels] --> B
+    B --> D[Feature Store]
+    D --> E[Training Pipeline]
+    D --> F[Inference Pipeline]
+```
+Upcoming work: 
+- Transaction data will be moved from flatfile to live DB
+- Feature Pipeline will become a scalable pipeline (kafka, pyspark etc)
+- Inference Pipeline will move into FastAPI container
+- Training results will be registered in MLFlow
 
 
 Todos:

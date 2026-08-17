@@ -1,8 +1,5 @@
-# This is an example feature definition file
-
 from datetime import timedelta
 
-import pandas as pd
 
 from feast import (
     ConflictPolicy,
@@ -14,194 +11,93 @@ from feast import (
     LabelView,
     Project,
     PushSource,
-    RequestSource,
+    ValueType,
 )
 from feast.feature_logging import LoggingConfig
 from feast.infra.offline_stores.file_source import FileLoggingDestination
-from feast.on_demand_feature_view import on_demand_feature_view
-from feast.types import Float32, Float64, Int64, Json, Map, String, Struct
+from feast.types import Float32, Int32, Int64, String
 
 # Define a project for the feature repo
 project = Project(name="feature_store", description="A project for driver statistics")
 
 # Define an entity for the driver. You can think of an entity as a primary key used to
 # fetch features.
-driver = Entity(name="driver", join_keys=["driver_id"])
+transaction = Entity(name="transaction", join_keys=["ID"], value_type=ValueType.STRING)
 
 # Read data from parquet files. Parquet is convenient for local development mode. For
 # production, you can use your favorite DWH, such as BigQuery. See Feast documentation
 # for more info.
-driver_stats_source = FileSource(
-    name="driver_hourly_stats_source",
-    path="data\driver_stats.parquet",
-    timestamp_field="event_timestamp",
-    created_timestamp_column="created",
+# TODO: We will use real time as well later via PushSource, but for now we will use a static dataset
+# TODO: Understand how we can have a batch and real time source for historical data and real time data
+transaction_source = FileSource(
+    name="transaction_transactions_source",
+    path="../../../data/processed/features.csv",
+    timestamp_field="Timestamp",
 )
 
-# Our parquet files contain sample data that includes a driver_id column, timestamps and
-# three feature column. Here we define a Feature View that will allow us to serve this
+# Here we define a Feature View that will allow us to serve this
 # data to our model online.
-driver_stats_fv = FeatureView(
-    # The unique name of this feature view. Two feature views in a single
-    # project cannot have the same name
-    name="driver_hourly_stats",
-    entities=[driver],
-    ttl=timedelta(days=1),
-    # The list of features defined below act as a schema to both define features
-    # for both materialization of features into a store, and are used as references
-    # during retrieval for building a training dataset or serving features
+transaction_fv = FeatureView(
+    name="transaction",
+    entities=[transaction],
+    ttl=timedelta(), # Live forever since this is a static dataset
     schema=[
-        Field(name="conv_rate", dtype=Float32),
-        Field(name="acc_rate", dtype=Float32),
-        Field(name="avg_daily_trips", dtype=Int64, description="Average daily trips"),
-        Field(
-            name="driver_metadata",
-            dtype=Map,
-            description="Driver metadata as key-value pairs",
-        ),
-        Field(
-            name="driver_config", dtype=Json, description="Driver configuration as JSON"
-        ),
-        Field(
-            name="driver_profile",
-            dtype=Struct({"name": String, "age": String}),
-            description="Driver profile as a typed struct",
-        ),
+        Field(name="ID", dtype=String),
+        Field(name="Timestamp", dtype=String),
+        Field(name="To Bank", dtype=String),
+        Field(name="Account.1", dtype=String),
+        Field(name="Amount Received", dtype=Float32),
+        Field(name="Receiving Currency", dtype=String),
+        Field(name="Amount Paid", dtype=Float32),
+        Field(name="Payment Currency", dtype=String),
+        Field(name="Payment Format", dtype=String),
+        Field(name="Amount_Received_USD", dtype=Float32),
+        Field(name="Amount_Paid_USD", dtype=Float32),
+        Field(name="Account_Same", dtype=Int64),
+        Field(name="Bank_Same", dtype=Int64),
     ],
-    online=True,
-    source=driver_stats_source,
-    # Tags are user defined key/value pairs that are attached to each
-    # feature view
-    tags={"team": "driver_performance"},
-    enable_validation=True,
-    version="latest",
+    online=False,
+    source=transaction_source
 )
-
-# Define a request data source which encodes features / information only
-# available at request time (e.g. part of the user initiated HTTP request)
-input_request = RequestSource(
-    name="vals_to_add",
-    schema=[
-        Field(name="val_to_add", dtype=Int64),
-        Field(name="val_to_add_2", dtype=Int64),
-    ],
-)
-
-
-# Define an on demand feature view which can generate new features based on
-# existing feature views and RequestSource features
-@on_demand_feature_view(
-    sources=[driver_stats_fv, input_request],
-    schema=[
-        Field(name="conv_rate_plus_val1", dtype=Float64),
-        Field(name="conv_rate_plus_val2", dtype=Float64),
-    ],
-)
-def transformed_conv_rate(inputs: pd.DataFrame) -> pd.DataFrame:
-    df = pd.DataFrame()
-    df["conv_rate_plus_val1"] = inputs["conv_rate"] + inputs["val_to_add"]
-    df["conv_rate_plus_val2"] = inputs["conv_rate"] + inputs["val_to_add_2"]
-    return df
 
 
 # This groups features into a model version
-driver_activity_v1 = FeatureService(
-    name="driver_activity_v1",
+transaction_v1 = FeatureService(
+    name="transaction_v1",
     features=[
-        driver_stats_fv[["conv_rate"]],  # Sub-selects a feature from a feature view
-        transformed_conv_rate,  # Selects all features from the feature view
+        transaction_fv, # Selects all features from the feature view
     ],
     logging_config=LoggingConfig(
         destination=FileLoggingDestination(path="data")
     ),
-)
-driver_activity_v2 = FeatureService(
-    name="driver_activity_v2", features=[driver_stats_fv, transformed_conv_rate]
-)
-
-# Defines a way to push data (to be available offline, online or both) into Feast.
-driver_stats_push_source = PushSource(
-    name="driver_stats_push_source",
-    batch_source=driver_stats_source,
-)
-
-# Defines a slightly modified version of the feature view from above, where the source
-# has been changed to the push source. This allows fresh features to be directly pushed
-# to the online store for this feature view.
-driver_stats_fresh_fv = FeatureView(
-    name="driver_hourly_stats_fresh",
-    entities=[driver],
-    ttl=timedelta(days=1),
-    schema=[
-        Field(name="conv_rate", dtype=Float32),
-        Field(name="acc_rate", dtype=Float32),
-        Field(name="avg_daily_trips", dtype=Int64),
-        Field(name="driver_metadata", dtype=Map),
-        Field(name="driver_config", dtype=Json),
-        Field(name="driver_profile", dtype=Struct({"name": String, "age": String})),
-    ],
-    online=True,
-    source=driver_stats_push_source,  # Changed from above
-    tags={"team": "driver_performance"},
-    version="latest",
-)
-
-
-# Define an on demand feature view which can generate new features based on
-# existing feature views and RequestSource features
-@on_demand_feature_view(
-    sources=[driver_stats_fresh_fv, input_request],  # relies on fresh version of FV
-    schema=[
-        Field(name="conv_rate_plus_val1", dtype=Float64),
-        Field(name="conv_rate_plus_val2", dtype=Float64),
-    ],
-)
-def transformed_conv_rate_fresh(inputs: pd.DataFrame) -> pd.DataFrame:
-    df = pd.DataFrame()
-    df["conv_rate_plus_val1"] = inputs["conv_rate"] + inputs["val_to_add"]
-    df["conv_rate_plus_val2"] = inputs["conv_rate"] + inputs["val_to_add_2"]
-    return df
-
-
-driver_activity_v3 = FeatureService(
-    name="driver_activity_v3",
-    features=[driver_stats_fresh_fv, transformed_conv_rate_fresh],
 )
 
 # --- Label Views ---
 # Label views manage mutable human labels for training data, RLHF, and evaluation.
 # They use PushSources so labels can be submitted from the UI or external tools.
 
-driver_quality_labels_source = PushSource(
-    name="driver_quality_labels_push",
+transaction_fraud_labels_source = PushSource(
+    name="transaction_fraud_labels_push",
     batch_source=FileSource(
-        name="driver_quality_labels_batch",
-        path="data\driver_quality_labels.parquet",
-        timestamp_field="event_timestamp",
+        name="transaction_fraud_labels_batch",
+        path="../../../data/processed/labels.csv",
+        timestamp_field="Timestamp",
     ),
 )
 
-driver_quality_labels = LabelView(
-    name="driver_quality_labels",
-    entities=[driver],
+transaction_fraud_labels = LabelView(
+    name="transaction_fraud_labels",
+    entities=[transaction],
     schema=[
-        Field(name="is_reliable", dtype=Int64),
-        Field(name="quality_score", dtype=Float32),
-        Field(name="reviewer_notes", dtype=String),
+        Field(name="Is_Laundering", dtype=Int32),
         Field(name="labeler", dtype=String),
     ],
-    source=driver_quality_labels_source,
+    source=transaction_fraud_labels_source,
     labeler_field="labeler",
     conflict_policy=ConflictPolicy.LAST_WRITE_WINS,
-    description="Human quality labels for drivers - used for model training and evaluation",
+    description="Human fraud labels for transactional data - used for model training and evaluation",
     tags={
         "feast.io/labeling-method": "table",
-        "feast.io/field-role:is_reliable": "label",
-        "feast.io/field-role:quality_score": "label",
-        "feast.io/field-role:reviewer_notes": "metadata",
-        "feast.io/label-values:is_reliable": "1 0",
-        "feast.io/label-widget:is_reliable": "binary",
-        "feast.io/label-widget:quality_score": "number",
-        "feast.io/label-widget:reviewer_notes": "text",
+        "feast.io/field-role:is_default": "expectation", # Ground truth labels
     },
 )

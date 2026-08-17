@@ -64,7 +64,7 @@ def main(
     df_engineered.to_csv(output_features_path, index=False)
 
     logger.info(f"Saving labels dataset to {output_labels_path}...")
-    df[["Is Laundering"]].to_csv(output_labels_path, index=False)
+    df_engineered[["ID", "Is Laundering"]].to_csv(output_labels_path, index=False)
     
     logger.success("Feature extraction complete.")
     logger.warning("These intermediate files are for EDA only. Use train.py for the full pipeline.")

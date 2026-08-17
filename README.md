@@ -91,6 +91,9 @@ Transactions ──────►│ Kafka / Queue│
   ]
 }
 ```
+### Feature Store
+#### Apply
+- Run `feast apply` from the `financial_crime\feature_store\feature_repo` directory
 
 ## Modeling Results
 TODO: boost positive class precision

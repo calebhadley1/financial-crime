@@ -88,26 +88,12 @@ def main(
 
     # Execute training pipeline orchestration
     training_pipeline = TrainingPipeline(
-        feature_engineer=FeatureEngineer.load(feature_engineer_path),
         test_size=TEST_SIZE,
         sampling_strategy=SAMPLING_STRATEGY,
         random_state=RANDOM_STATE
     )
     
-    (
-        ml_pipeline,
-        X_train_preprocessed,
-        y_train_resampled,
-        X_test,
-        X_test_preprocessed,
-        y_test,
-    ) = training_pipeline.train(X, y, model)
-
-    # Persist engineered test data for evaluation (not preprocessed)
-    logger.info(f"Saving engineered test features to {test_features_path}")
-    X_test.to_csv(test_features_path, index=False)
-    logger.info(f"Saving test labels to {test_labels_path}")
-    y_test.to_csv(test_labels_path, index=False)
+    ml_pipeline = training_pipeline.train(X, y, model)
 
     # Save complete pipeline
     logger.info("Saving complete ML pipeline...")

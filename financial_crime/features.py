@@ -30,13 +30,16 @@ app = typer.Typer()
 
 @app.command()
 def main(
+    # input
     input_path: Path = PROCESSED_DATA_DIR / "dataset.csv",
+    # output
     output_features_path: Path = PROCESSED_DATA_DIR / "features.parquet",
     output_labels_path: Path = PROCESSED_DATA_DIR / "labels.parquet",
     output_feature_engineer_path: Path = MODELS_DIR / "pipeline" / "feature_engineer.pkl"
 ):
     """
-    Extract engineered features and labels from raw dataset.
+    Extract engineered features and labels from raw dataset. Used prior to training/inference
+    to ensure features are ready for modeling
     
     This produces feature and label CSVs which can be:
     1. Loaded into the Feature Store

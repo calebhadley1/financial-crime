@@ -28,18 +28,15 @@ class InferencePipeline:
     
     def __init__(
         self,
-        feature_engineer: FeatureEngineer,
         preprocessor: FeaturePreprocessor,
         model
     ):
         """Initialize the pipeline with all components.
         
         Args:
-            feature_engineer: FeatureEngineer instance (fitted)
             preprocessor: FeaturePreprocessor instance (fitted)
             model: Trained sklearn model
         """
-        self.feature_engineer = feature_engineer
         self.preprocessor = preprocessor
         self.model = model
     
@@ -47,7 +44,6 @@ class InferencePipeline:
         """Generate predictions on raw data.
         
         Applies the complete transformation pipeline:
-        1. Feature engineering (currency conversion, feature creation)
         2. Preprocessing (categorical encoding, scaling)
         3. Model prediction
         
@@ -59,13 +55,9 @@ class InferencePipeline:
         """
         logger.debug(f"Predicting on {len(X)} samples")
         
-        # Step 1: Feature engineering
-        logger.debug("Step 1: Applying feature engineering...")
-        X_engineered = self.feature_engineer.transform(X)
-        
         # Step 2: Preprocessing
         logger.debug("Step 2: Applying preprocessing...")
-        X_preprocessed = self.preprocessor.transform(X_engineered)
+        X_preprocessed = self.preprocessor.transform(X)
         
         # Step 3: Model prediction
         logger.debug("Step 3: Running model inference...")
@@ -95,8 +87,7 @@ class InferencePipeline:
         logger.debug(f"Predicting probabilities on {len(X)} samples")
         
         # Apply transformations
-        X_engineered = self.feature_engineer.transform(X)
-        X_preprocessed = self.preprocessor.transform(X_engineered)
+        X_preprocessed = self.preprocessor.transform(X)
         
         # Get probabilities
         probabilities = self.model.predict_proba(X_preprocessed)
@@ -115,7 +106,6 @@ class InferencePipeline:
         logger.info(f"Saving pipeline to {path}")
         
         # Save each component
-        self.feature_engineer.save(path / "feature_engineer.pkl")
         self.preprocessor.save(path / "preprocessor.pkl")
         
         with open(path / "model.pkl", "wb") as file:
@@ -138,7 +128,6 @@ class InferencePipeline:
         logger.info(f"Loading pipeline from {path}")
         
         # Load each component
-        feature_engineer = FeatureEngineer.load(path / "feature_engineer.pkl")
         preprocessor = FeaturePreprocessor.load(path / "preprocessor.pkl")
         
         with open(path / "model.pkl", "rb") as file:
@@ -146,4 +135,4 @@ class InferencePipeline:
         
         logger.success("Pipeline loaded successfully")
         
-        return InferencePipeline(feature_engineer, preprocessor, model)
+        return InferencePipeline(preprocessor, model)

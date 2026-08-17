@@ -13,6 +13,7 @@ from typing import Tuple
 import pandas as pd
 import numpy as np
 from loguru import logger
+from sklearn.metrics import classification_report
 from sklearn.model_selection import train_test_split
 from imblearn.under_sampling import RandomUnderSampler
 
@@ -42,7 +43,6 @@ class TrainingPipeline:
     
     def __init__(
         self,
-        feature_engineer: FeatureEngineer,
         test_size: float = TEST_SIZE,
         sampling_strategy: float = SAMPLING_STRATEGY,
         random_state: int = RANDOM_STATE,
@@ -58,7 +58,6 @@ class TrainingPipeline:
         self.sampling_strategy = sampling_strategy
         self.random_state = random_state
         
-        self.feature_engineer = feature_engineer
         self.preprocessor = None
         self.resampler = None
     
@@ -215,10 +214,16 @@ class TrainingPipeline:
         
         # Step 6: Create pipeline for inference
         logger.info("Creating inference pipeline...")
-        pipeline = InferencePipeline(self.feature_engineer, self.preprocessor, model)
+        pipeline = InferencePipeline(self.preprocessor, model)
+
+        logger.info("Testing pipeline on holdout set")
+        y_pred = pipeline.predict(X_test)
+        logger.info("Generating classification report...")
+        report = classification_report(y_test, y_pred)
+        logger.info(f"\n{report}")
         
         logger.info("="*60)
         logger.info("Training workflow complete")
         logger.info("="*60)
         
-        return pipeline, X_train_preprocessed, y_train_resampled, X_test, X_test_preprocessed, y_test
+        return pipeline

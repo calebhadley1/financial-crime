@@ -13,17 +13,23 @@ app = typer.Typer()
 @app.command()
 def main(
     input_path: Path = RAW_DATA_DIR / "HI-Small_Trans.csv",
-    output_path: Path = PROCESSED_DATA_DIR / "dataset.csv",
+    output_holdout_set_path: Path = PROCESSED_DATA_DIR / "dataset_50k.csv",
+    output_remainder_path: Path = PROCESSED_DATA_DIR / "dataset.csv",
 ):
     logger.info(f"Processing dataset from {input_path}...")
+    logger.info("TODO: Add automatic downloading of the dataset from Kaggle using Kaggle SDK")
     df = pd.read_csv(input_path)
 
-    logger.info("For now we are just duplicating the dataset into processed")
-    logger.info("TODO: Add automatic downloading of the dataset from Kaggle using Kaggle SDK")
-    logger.info("TODO: Create an initial train/test split of the dataset so that we can simulate real-time inference using data sources like kafka")
-    
-    logger.info(f"Saving processed dataset to {output_path}...")
-    df.to_csv(output_path, index=False)
+    logger.info("Splitting dataset into a 50k final holdout set and remaining...")
+
+    df_last_10k = df.iloc[-50000:]
+    df_remainder = df.iloc[:-50000]
+
+    logger.info(f"Saving processed dataset with {len(df_remainder)} rows to {output_remainder_path}...")
+    df_remainder.to_csv(output_remainder_path, index=False)
+
+    logger.info(f"Saving processed holdout set with {len(df_last_10k)} rows to {output_holdout_set_path}...")
+    df_last_10k.to_csv(output_holdout_set_path, index=False)
 
     logger.success("Processing dataset complete.")
 

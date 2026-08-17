@@ -35,6 +35,11 @@ transaction_source = FileSource(
     timestamp_field="event_timestamp",
 )
 
+transaction_push_source = PushSource(
+    name="transaction_push_source",
+    batch_source=transaction_source,
+)
+
 # Here we define a Feature View that will allow us to serve this
 # data to our model online.
 transaction_fv = FeatureView(
@@ -59,8 +64,8 @@ transaction_fv = FeatureView(
         Field(name="Account_Same", dtype=Int64),
         Field(name="Bank_Same", dtype=Int64),
     ],
-    online=False,
-    source=transaction_source
+    online=True,
+    source=transaction_push_source
 )
 
 # --- Label Views ---

@@ -109,6 +109,13 @@ Transactions ──────►│ Kafka / Queue│
 ### Feature Store
 #### Apply
 - Run `feast apply` from the `financial_crime\feature_store\feature_repo` directory
+### Kafka
+- We have a producer & consumer to simulate end to end fraud detection. The producer reads from a flatfile and posts to the topic. 
+The consumer performs feature engineering, loads the data into the feature store, and requests the detection API to make a prediction
+#### Run producer
+- 
+#### Run consumer
+- 
 
 ## Modeling Results
 TODO: boost positive class precision

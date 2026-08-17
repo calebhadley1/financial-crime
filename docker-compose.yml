@@ -1,4 +1,23 @@
 services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+    restart: unless-stopped
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: financial-crime-kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    depends_on:
+      - zookeeper
+    restart: unless-stopped
+
   api:
     build:
       context: .
@@ -6,4 +25,32 @@ services:
     container_name: financial-crime-api
     ports:
       - "8000:8000"
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    depends_on:
+      - kafka
+    restart: unless-stopped
+
+  producer:
+    build:
+      context: .
+      dockerfile: Dockerfile.producer
+    container_name: financial-crime-producer
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    depends_on:
+      - kafka
+    restart: unless-stopped
+
+  consumer:
+    build:
+      context: .
+      dockerfile: Dockerfile.consumer
+    container_name: financial-crime-consumer
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      API_URL: http://api:8000
+    depends_on:
+      - kafka
+      - api
     restart: unless-stopped

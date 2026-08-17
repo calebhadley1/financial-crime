@@ -1,3 +1,4 @@
+import os
 from time import sleep
 
 from loguru import logger
@@ -14,9 +15,12 @@ holdout_set_path = PROCESSED_DATA_DIR / "dataset_50k.parquet"
 logger.info(f"Reading holdout set from {holdout_set_path}")
 df = pd.read_parquet(holdout_set_path)
 
+# Get Kafka broker from environment variable
+kafka_bootstrap_servers = os.getenv('KAFKA_BOOTSTRAP_SERVERS', 'localhost:9092').split(',')
+
 # Initialize Kafka producer
 producer = KafkaProducer(
-    bootstrap_servers=["localhost:9092"],
+    bootstrap_servers=kafka_bootstrap_servers,
     # value_serializer=lambda v: json.dumps(v).encode("utf-8"),
 )
 

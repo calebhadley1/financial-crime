@@ -1,3 +1,4 @@
+import os
 from feast import FeatureStore
 from loguru import logger
 import pandas as pd
@@ -8,7 +9,15 @@ from financial_crime.config import MODELS_DIR
 from financial_crime.modeling.transformers.feature_engineering import FeatureEngineer
 from kafka import JsonSerializer, KafkaConsumer
 
-consumer = KafkaConsumer("transaction-fraud-detection-topic", value_deserializer=JsonSerializer())
+# Get Kafka broker from environment variable
+kafka_bootstrap_servers = os.getenv('KAFKA_BOOTSTRAP_SERVERS', 'localhost:9092')
+api_url = os.getenv('API_URL', 'http://localhost:8000')
+
+consumer = KafkaConsumer(
+    "transaction-fraud-detection-topic",
+    bootstrap_servers=kafka_bootstrap_servers,
+    value_deserializer=JsonSerializer()
+)
 
 for msg in tqdm(consumer):
     # Ingest message into Feast
@@ -28,8 +37,7 @@ for msg in tqdm(consumer):
 
     # 3. Coerce message and request the API to make a prediction
     logger.info("Requesting API fraud detection...")
-    url = 'localhost:8000'
     json = {
         "raw_features": df_engineered.to_dict(orient='records')
     }
-    requests.post(url, json)
+    requests.post(f'{api_url}/predict', json=json)

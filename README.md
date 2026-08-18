@@ -26,13 +26,15 @@ Major topics covered:
 ## Architecture
 ```mermaid
 graph TD;
-    A[Financial Transactions - Real Time] --> B[Kafka]
+    A[Real Time Financial Transactions] --> B[Kafka]
     B --> C[Feature Engineering Pipeline]
     C --> D[Feature Store]
     D --> E[Training Pipeline]
     D --> F[Inference Pipeline]
 
-    G[Historical Raw Features + Labels - Batch Flatfile] --> C
+    G[Batch Historical Raw Features + Labels] --> H[Flatfile]
+    H --> C
+
 ```
 Upcoming work: 
 - Transaction data will be moved from flatfile to live DB

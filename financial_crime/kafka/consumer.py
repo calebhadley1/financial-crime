@@ -38,6 +38,6 @@ for msg in tqdm(consumer):
     # 3. Coerce message and request the API to make a prediction
     logger.info("Requesting API fraud detection...")
     json = {
-        "raw_features": df_engineered.to_dict(orient='records')
+        "features": df_engineered.to_dict(orient='records')
     }
     requests.post(f'{api_url}/predict', json=json)

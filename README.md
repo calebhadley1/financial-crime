@@ -174,6 +174,8 @@ TODO: boost positive class precision
     ├── features.py             <- Code to create features for exploratory modeling
     │
     |── api                     <- Live API for model inference
+    |── feature_store           <- Feast Feature Store
+    |── kafka                   <- Kafka Producer/Consumer for simulating Real-time transactions
     ├── modeling    
     │   ├── __init__.py 
     |   ├── pipelines           <- Training/inference abstractions

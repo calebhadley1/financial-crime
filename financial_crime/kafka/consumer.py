@@ -1,4 +1,5 @@
 import os
+
 from feast import FeatureStore
 from loguru import logger
 import pandas as pd
@@ -10,13 +11,13 @@ from financial_crime.modeling.transformers.feature_engineering import FeatureEng
 from kafka import JsonSerializer, KafkaConsumer
 
 # Get Kafka broker from environment variable
-kafka_bootstrap_servers = os.getenv('KAFKA_BOOTSTRAP_SERVERS', 'localhost:9092')
-api_url = os.getenv('API_URL', 'http://localhost:8000')
+kafka_bootstrap_servers = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
+api_url = os.getenv("API_URL", "http://localhost:8000")
 
 consumer = KafkaConsumer(
     "transaction-fraud-detection-topic",
     bootstrap_servers=kafka_bootstrap_servers,
-    value_deserializer=JsonSerializer()
+    value_deserializer=JsonSerializer(),
 )
 
 for msg in tqdm(consumer):
@@ -24,7 +25,7 @@ for msg in tqdm(consumer):
 
     # 1. Perform Feature Engineering using the persisted FeatureEngineer
     logger.info("Loading FeatureEngineer")
-    feature_engineer = FeatureEngineer.load(MODELS_DIR / "pipeline_dir" / "feature_engineer.pkl")
+    feature_engineer = FeatureEngineer.load(MODELS_DIR / "pipeline" / "feature_engineer.pkl")
 
     logger.info("Applying FE to holdout set...")
     df = pd.DataFrame([msg.value])
@@ -36,8 +37,8 @@ for msg in tqdm(consumer):
     feature_store.push("transaction_push_source", df_engineered)
 
     # 3. Coerce message and request the API to make a prediction
+    dt_cols = df_engineered.select_dtypes(include=["datetime64", "datetimetz"]).columns
+    df_engineered[dt_cols] = df_engineered[dt_cols].astype(str)
     logger.info("Requesting API fraud detection...")
-    json = {
-        "features": df_engineered.to_dict(orient='records')
-    }
-    requests.post(f'{api_url}/predict', json=json)
+    json = {"features": df_engineered.to_dict(orient="records")}
+    requests.post(f"{api_url}/predict", json=json)

@@ -39,7 +39,7 @@ def predict(request: PredictionRequest) -> PredictionResponse:
     """
     # Convert list of dicts to DataFrame
     logger.info("Transforming engineered features request into DataFrame")
-    df = pd.DataFrame(request.raw_features)
+    df = pd.DataFrame(request.features)
 
     # Load the trained pipeline
     logger.info("Loading pipeline")
@@ -49,7 +49,7 @@ def predict(request: PredictionRequest) -> PredictionResponse:
     logger.info("Making prediction")
     preds = pipeline.predict(df)
     predictions = preds.tolist()
-    
+
     # Summary stat on # fraud vs non-fraud predictions
     values, counts = np.unique(predictions, return_counts=True)
     value_counts = dict(zip(values, counts))

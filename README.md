@@ -40,39 +40,8 @@ Upcoming work:
 - Transaction data will be moved from flatfile to live DB
 - Training results will be registered in MLFlow
 
-
 Todos:
 - add work on graph based detection using synthetic data: https://github.com/SantanderAI/gen-fraud-graph
-- add work on real time monitoring vs the batch techniques done in these projects
-
-
-                    ┌──────────────┐
-Transactions ──────►│ Kafka / Queue│
-                    └──────┬───────┘
-                           │
-                           ▼
-                 ┌──────────────────┐
-                 │ Feature Pipeline  │
-                 └────────┬─────────┘
-                          │
-             ┌────────────┴────────────┐
-             ▼                         ▼
-       Batch features             Online features
-             │                         │
-             └────────────┬────────────┘
-                          ▼
-                   ┌──────────────┐
-                   │ ML Inference │
-                   │   Service    │
-                   └──────┬───────┘
-                          │
-             ┌────────────┴────────────┐
-             ▼                         ▼
-        Risk score                 Decision
-             │                         │
-             ▼                         ▼
-       Monitoring              Alert / Review
-
 
 ## Setup
 ### Download Source Data

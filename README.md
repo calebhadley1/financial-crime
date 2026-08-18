@@ -11,11 +11,13 @@ This projects contains both acadmic data science work and production ready ML sy
 ## Overview
 Major topics covered:
 - Academic data science work on exploratory data analysis and modeling can be found [here](papers\README.md)
-- Reusable feature generation, training/inference pipelines, model persistance
+- Feature Store (Feast) to store engineered features
+- Feature Engineering pipeline
+- Training/inference pipelines (Sci-kit Learn, ImbLearn, One-Hot Encoding, StandardScaler)
+- Model persistance (pickle)
 - Model serving with FastAPI + Docker
-- Feature Store (Feast)
-- Real-time Kafka Streaming for Model Inference [TODO]
-- Batch PySpark Pipelines for Historical Feature Generation
+- Real-time Kafka Streaming for Feature Engineering, Feature Store Persistance & Model Inference API invocation workflow
+- Batch feature engineering, training, and inference capability (Python + typer + parquet)
 - Model Versioning [TODO]
 - Monitoring (Drift, latency, distributions) [TODO]
 - Automated tests [TODO]
@@ -24,16 +26,16 @@ Major topics covered:
 ## Architecture
 ```mermaid
 graph TD;
-    A[Raw Features + Optional Labels] --> B(Feature Engineering Pipeline);
-    C[Holdout Raw Features + Labels] --> B
-    B --> D[Feature Store]
+    A[Financial Transactions - Real Time] --> B[Kafka]
+    B --> C[Feature Engineering Pipeline]
+    C --> D[Feature Store]
     D --> E[Training Pipeline]
     D --> F[Inference Pipeline]
+
+    G[Historical Raw Features + Labels - Batch Flatfile] --> C
 ```
 Upcoming work: 
 - Transaction data will be moved from flatfile to live DB
-- Feature Pipeline will become a scalable pipeline (kafka, pyspark etc)
-- Inference Pipeline will move into FastAPI container
 - Training results will be registered in MLFlow
 
 

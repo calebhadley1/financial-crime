@@ -47,6 +47,7 @@ force-sort-within-sections = true
 
 [dependency-groups]
 dev = [
+    "factory-boy>=3.3.3",
     "matplotlib>=3.11.1",
     "pytest>=8.0",
     "pytest-cov>=7.1.0",

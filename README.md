@@ -66,7 +66,7 @@ retrieval and online feature writes; the API does not query Feast during predict
 
 The project is intentionally being developed in stages. The next improvements are:
 
-- [ ] Add unit and smoke tests for feature engineering, train/inference parity, and `/predict`.
+- [ ] Add integration tests for feature engineering, train/inference parity, and `/predict`.
 - [ ] Add temporal and entity-aware validation to reduce leakage from related transactions.
 - [ ] Report PR-AUC, threshold selection, confusion matrix, and review-volume tradeoffs.
 - [ ] Replace untyped API dictionaries with a versioned request schema and probability output.
@@ -178,6 +178,12 @@ docker compose up --build
 
 The producer intentionally sleeps between records to simulate a live stream, so the
 50k-row holdout can take a long time to finish. Stop the stack with `Ctrl+C`.
+
+## Automated Tests
+Unit tests can be run with the following command:
+```powershell
+uv run pytest --cov=financial_crime
+```
 
 ## Modeling Results
 

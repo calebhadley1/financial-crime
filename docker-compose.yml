@@ -24,10 +24,12 @@ services:
   api:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.api
     container_name: financial-crime-api
     ports:
       - "8000:8000"
+    volumes:
+      - feast_data:/app/financial_crime/feature_store/feature_repo/data
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
     depends_on:
@@ -50,6 +52,8 @@ services:
       context: .
       dockerfile: Dockerfile.consumer
     container_name: financial-crime-consumer
+    volumes:
+      - feast_data:/app/financial_crime/feature_store/feature_repo/data
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       API_URL: http://api:8000
@@ -57,3 +61,6 @@ services:
       - kafka
       - api
     restart: unless-stopped
+
+volumes:
+  feast_data:

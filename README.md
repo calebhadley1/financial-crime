@@ -1,97 +1,208 @@
-# financial_crime
+# Financial Crime Detection
 
 <a target="_blank" href="https://cookiecutter-data-science.drivendata.org/">
     <img src="https://img.shields.io/badge/CCDS-Project%20template-328F97?logo=cookiecutter" />
 </a>
 
-Financial Crime detection using Machine Learning
+This repository demonstrates an end-to-end machine learning prototype for transaction
+laundering detection. Raw transaction data is prepared in batch, transformed into
+reusable features, registered with Feast, used to train and serialize a model, and
+served through FastAPI. A Kafka producer and consumer simulate real-time transaction
+scoring.
 
-This projects contains both acadmic data science work and production ready ML systems
+The focus is on the engineering path from data preparation to inference: reproducible
+feature transformations, point-in-time feature retrieval, imbalanced-class training,
+containerized serving, and a streaming integration test. This is a local prototype,
+not a production financial-crime detection service.
 
 ## Overview
-Major topics covered:
-- Academic data science work on exploratory data analysis and modeling can be found [here](papers\README.md)
-- Feature Store (Feast) to store engineered features
-- Feature Engineering pipeline
-- Training/inference pipelines (Sci-kit Learn, ImbLearn, One-Hot Encoding, StandardScaler)
-- Model persistance (pickle)
-- Model serving with FastAPI + Docker
-- Real-time Kafka Streaming for Feature Engineering, Feature Store Persistance & Model Inference API invocation workflow
-- Batch feature engineering, training, and inference capability (Python + typer + parquet)
-- Model Versioning [TODO]
-- Monitoring (Drift, latency, distributions) [TODO]
-- Automated tests [TODO]
-- CI/CD [TODO]
+- Batch data preparation and feature engineering with Python, pandas, and Parquet
+- A Feast feature store with offline historical retrieval and an online SQLite store
+- Train-only preprocessing and class-imbalance handling with scikit-learn
+- Serialized feature-engineering and inference pipelines
+- FastAPI model serving in Docker
+- Kafka-based streaming simulation from transaction input to API prediction
+- Academic exploratory analysis and modeling in the [papers](papers/README.md) directory
+
+Current limitations are tracked in the roadmap below. In particular, the evaluation
+currently uses a random row split and the streaming stack is a local simulation. The
+dataset must be downloaded separately because the source data is not redistributed here.
 
 ## Architecture
 ```mermaid
-graph TD;
-    A[Real Time Financial Transactions] --> B[Kafka]
-    B --> C[Feature Engineering Pipeline]
-    C --> D[Feature Store]
-    D --> E[Training Pipeline]
-    D --> F[Inference Pipeline]
+flowchart LR
+  subgraph Batch[Batch training and evaluation]
+    A[Raw CSV] --> B[Dataset preparation]
+    B --> C[Feature engineering]
+    C --> D[Feast offline store]
+    D --> E[Training pipeline]
+    E --> F[Serialized model pipeline]
+    F --> G[Batch inference and evaluation]
+  end
 
-    G[Batch Historical Raw Features + Labels] --> H[Flatfile]
-    H --> C
-
+  subgraph Stream[Streaming inference simulation]
+    H[Holdout CSV] --> I[Kafka producer]
+    I --> J[Kafka topic]
+    J --> K[Kafka consumer]
+    K --> L[Feature engineering]
+    L --> M[Feast online store]
+    L --> N[FastAPI /predict]
+    N --> O[Prediction]
+  end
 ```
-Upcoming work: 
-- Transaction data will be moved from flatfile to live DB
-- Training results will be registered in MLFlow
 
-Todos:
-- add work on graph based detection using synthetic data: https://github.com/SantanderAI/gen-fraud-graph
+The batch path creates the persisted feature-engineering transformer and model pipeline
+needed by the streaming path. The consumer receives raw transaction records, applies
+the persisted feature engineer, pushes the engineered record to Feast, and sends the
+same engineered record to the API. Feast is currently used for historical training
+retrieval and online feature writes; the API does not query Feast during prediction.
+
+## Roadmap
+
+The project is intentionally being developed in stages. The next improvements are:
+
+- [ ] Add unit and smoke tests for feature engineering, train/inference parity, and `/predict`.
+- [ ] Add temporal and entity-aware validation to reduce leakage from related transactions.
+- [ ] Report PR-AUC, threshold selection, confusion matrix, and review-volume tradeoffs.
+- [ ] Replace untyped API dictionaries with a versioned request schema and probability output.
+- [ ] Add API health checks, request timeouts/retries, structured metrics, and model metadata.
+- [ ] Pin and document the exact dataset version, provenance, license, and expected artifacts.
+- [ ] Add CI for formatting, linting, tests, and a lightweight training/inference smoke test.
+- [ ] Register models and evaluation results with MLflow.
+- [ ] Explore graph-based detection with synthetic data: https://github.com/SantanderAI/gen-fraud-graph
 
 ## Setup
 ### Download Source Data
 - Download the required input dataset from https://www.kaggle.com/datasets/ealtman2019/ibm-transactions-for-anti-money-laundering-aml
 - Copy the `HI-Small_accounts.csv`, `HI-Small_Patterns.txt` and `HI-Small_Trans.csv` to `data/raw`
 ### Python Environment
-- Run `make create_environment`
-- Run `source ./.venv/bin/activate` (or `.\\\\.venv\\\\Scripts\\\\activate` for Windows)
-- Run `make requirements`
-### Get Features for EDA
-- Run `make data`
-- Run `typer financial_crime/features.py run`
-### Train Model
-- Run `typer financial_crime/modeling/train.py run`
-### Get Model Predictions
-- Run `typer financial_crime/modeling/predict.py run`
-### API
-- Run the app with docker using the typical `docker compose up --build`
-- Make a sample request @ localhost:8000/docs with the following payload:
+Install [uv](https://docs.astral.sh/uv/) and run:
+
+```powershell
+uv venv --python 3.12
+.\.venv\Scripts\activate
+uv sync
 ```
+
+On macOS or Linux, activate with `source ./.venv/bin/activate`.
+The Makefile provides equivalent convenience commands when GNU Make is available.
+
+### Batch workflow
+1. Download the dataset described above and copy the three source files into `data/raw`.
+2. Prepare the training and holdout files:
+
+  ```powershell
+  typer financial_crime/dataset.py run
+  ```
+
+3. Engineer features and labels:
+
+  ```powershell
+  typer financial_crime/features.py run
+  ```
+
+4. Apply the Feast definitions from the feature repository:
+
+  ```powershell
+  cd financial_crime\feature_store\feature_repo
+  uv run feast apply
+  cd ..\..\..
+  ```
+
+5. Train and serialize the complete pipeline:
+
+  ```powershell
+  typer financial_crime/modeling/train.py run
+  ```
+
+6. Run batch inference and evaluation on the holdout data:
+
+  ```powershell
+  typer financial_crime/modeling/predict.py run
+  ```
+
+The default outputs are written to `data/processed` and `models/pipeline`.
+
+### API
+Build and start the API:
+
+```powershell
+docker compose up --build api
+```
+
+Open [localhost:8000/docs](http://localhost:8000/docs). The API currently accepts
+engineered features, not raw transaction columns. The request body is deliberately
+shown below as a prototype contract; request schema validation is on the roadmap.
+
+A request has this shape:
+
+```json
 {
-  "raw_features": [
+  "features": [
     {
+      "ID": "transaction-id",
+      "event_timestamp": "2022-09-01T00:20:00",
       "Timestamp": "2022/09/01 00:20",
       "From Bank": "10",
-      "Account": "8000EBD30",
       "To Bank": "10",
+      "Account": "8000EBD30",
       "Account.1": "8000EBD30",
       "Amount Received": 3697.34,
       "Receiving Currency": "US Dollar",
       "Amount Paid": 3697.34,
       "Payment Currency": "US Dollar",
-      "Payment Format": "Reinvestment"
+      "Payment Format": "Reinvestment",
+      "Amount_Received_USD": 3697.34,
+      "Amount_Paid_USD": 3697.34,
+      "Account_Same": 1,
+      "Bank_Same": 1
     }
   ]
 }
 ```
+
+The response currently contains one integer prediction for each feature record. It does
+not yet include calibrated probabilities, the applied threshold, or model metadata:
+
+```json
+{"predictions": [0]}
+```
+
 ### Feature Store
-#### Apply
-- Run `feast apply` from the `financial_crime\feature_store\feature_repo` directory
+The local Feast repository uses Parquet for historical features and SQLite for the
+registry and online store. Run `feast apply` before training. The feature definitions
+are in `financial_crime/feature_store/feature_repo/feature_definitions.py`. In the
+current streaming simulation, Feast receives pushed features but the API receives the
+engineered record directly from the consumer.
+
 ### Kafka
-- We have a producer & consumer to simulate end to end fraud detection. The producer reads from a flatfile and posts to the topic. 
-The consumer performs feature engineering, loads the data into the feature store, and requests the detection API to make a prediction
-#### Run producer
-- 
-#### Run consumer
-- 
+The Compose stack contains ZooKeeper, Kafka, the API, a producer, and a consumer. The
+producer reads `data/processed/dataset_50k.csv` and publishes records to
+`transaction-fraud-detection-topic`. The consumer engineers each record, pushes it to
+Feast, and calls the API at `/predict`.
+
+Start the complete simulation with:
+
+```powershell
+docker compose up --build
+```
+
+The producer intentionally sleeps between records to simulate a live stream, so the
+50k-row holdout can take a long time to finish. Stop the stack with `Ctrl+C`.
 
 ## Modeling Results
-TODO: boost positive class precision
+
+The current model is a baseline for an extremely imbalanced classification problem.
+Accuracy alone is therefore not an appropriate success criterion. The positive class
+currently has high recall but very low precision: approximately 66% of positive
+examples are found, while only 3% of flagged transactions are positive. This creates a
+large review burden and is not an acceptable operating point without threshold tuning,
+cost-based evaluation, and comparison with stronger baselines.
+
+The reported holdout contains 1,015,669 transactions, including 1,035 positive
+examples. These results were produced using the current random row split and should
+not be interpreted as production performance. PR-AUC, threshold analysis, and
+temporal/entity-aware validation are tracked in the roadmap.
 
                 precision   recall   f1-score support
            0       1.00      0.98      0.99   1014634
@@ -101,19 +212,31 @@ TODO: boost positive class precision
     macro avg       0.51      0.82     0.52   1015669
     weighted avg    1.00      0.98     0.99   1015669
 
+## Generated Artifacts
+
+| Artifact | Purpose |
+| --- | --- |
+| `data/processed/dataset.csv` | Training source after dataset preparation |
+| `data/processed/dataset_50k.csv` | Holdout data used by batch and streaming inference |
+| `data/processed/features.parquet` | Engineered features for Feast and training |
+| `data/processed/labels.parquet` | Labels and entity timestamps for training |
+| `models/pipeline/feature_engineer.pkl` | Persisted feature-engineering transformer |
+| `models/pipeline/` | Persisted preprocessing and model pipeline |
+| `financial_crime/feature_store/feature_repo/data/` | Local Feast registry, online store, and logs |
+
 ## Project Organization
 
 ```
-├── LICENSE            <- Open-source license if one is chosen
-├── Makefile           <- Makefile with convenience commands like `make data` or `make train`
-├── README.md          <- The top-level README for developers using this project.
+├── LICENSE            <- MIT license
+├── Makefile           <- Convenience commands for environments, data, formatting, and linting
+├── README.md          <- Project overview, setup, architecture, and roadmap
 ├── data
 │   ├── external       <- Data from third party sources.
 │   ├── interim        <- Intermediate data that has been transformed.
 │   ├── processed      <- The final, canonical data sets for modeling.
 │   └── raw            <- The original, immutable data dump.
 │
-├── docs               <- A default mkdocs project; see www.mkdocs.org for details
+├── docs               <- MkDocs project documentation
 │
 ├── models             <- Trained and serialized models, model predictions, or model summaries
 │
@@ -123,20 +246,16 @@ TODO: boost positive class precision
 │
 ├── papers             <- Archival academic work done on the subject completed in graduate school
 |
-├── pyproject.toml     <- Project configuration file with package metadata for 
-│                         financial_crime and configuration for tools like black
-│
 ├── references         <- Data dictionaries, manuals, and all other explanatory materials.
 │
 ├── reports            <- Generated analysis as HTML, PDF, LaTeX, etc.
 │   └── figures        <- Generated graphics and figures to be used in reporting
 │
-├── requirements.txt   <- The requirements file for reproducing the analysis environment, e.g.
-│                         generated with `pip freeze > requirements.txt`
+├── docker-compose.yml  <- Local Kafka, API, producer, and consumer stack
+├── Dockerfile*         <- Container definitions for the API and streaming services
+├── pyproject.toml      <- Python dependencies and Ruff configuration
 │
-├── setup.cfg          <- Configuration file for flake8
-│
-└── financial_crime   <- Source code for use in this project.
+└── financial_crime   <- Application and modeling source code
     │
     ├── __init__.py             <- Makes financial_crime a Python module
     │
@@ -144,17 +263,17 @@ TODO: boost positive class precision
     │
     ├── dataset.py              <- Scripts to download or generate data
     │
-    ├── features.py             <- Code to create features for exploratory modeling
+    ├── features.py             <- Batch feature engineering and label preparation
     │
-    |── api                     <- Live API for model inference
-    |── feature_store           <- Feast Feature Store
-    |── kafka                   <- Kafka Producer/Consumer for simulating Real-time transactions
-    ├── modeling    
-    │   ├── __init__.py 
-    |   ├── pipelines           <- Training/inference abstractions
-    |   ├── transformers        <- Feature Engineering and Preprocessing abstractions
-    │   ├── predict.py          <- Code to run model inference with trained models          
-    │   └── train.py            <- Code to train models
+    ├── api                     <- FastAPI service for model inference
+    ├── feature_store           <- Feast definitions and local stores
+    ├── kafka                   <- Kafka producer/consumer streaming simulation
+    ├── modeling
+    │   ├── __init__.py
+    │   ├── pipelines           <- Training and inference orchestration
+    │   ├── transformers        <- Feature engineering and preprocessing
+    │   ├── predict.py          <- Batch inference and evaluation
+    │   └── train.py            <- Model training and serialization
     │
     └── plots.py                <- Code to create visualizations
 ```

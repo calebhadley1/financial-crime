@@ -25,8 +25,13 @@ not a production financial-crime detection service.
 - Academic exploratory analysis and modeling in the [papers](papers/README.md) directory
 
 Current limitations are tracked in the roadmap below. In particular, the evaluation
-currently uses a random row split and the streaming stack is a local simulation. The
-dataset must be downloaded separately because the source data is not redistributed here.
+currently uses a random row split and the streaming stack is a local simulation. Raw
+account and bank identifiers are excluded from model inputs, and the current features
+are row-local, so repeated entities do not create direct identity leakage. However, a
+random split may still produce an optimistic estimate when related transactions or
+laundering patterns are correlated, and it does not measure performance under temporal
+distribution shift. The dataset must be downloaded separately because the source data
+is not redistributed here.
 
 ## Architecture
 ```mermaid
@@ -54,7 +59,7 @@ flowchart LR
 The batch path creates the persisted feature-engineering transformer and model pipeline
 needed by the streaming path. The consumer receives raw transaction records, applies
 the persisted feature engineer, pushes the engineered record to Feast, and sends the
-same engineered record to the API. Feast is currently used for historical training
+transacton ID and event timestamp to the API. Feast is currently used for historical training
 retrieval and online feature writes; the API does not query Feast during prediction.
 
 ## Roadmap
@@ -131,41 +136,25 @@ docker compose up --build api
 ```
 
 Open [localhost:8000/docs](http://localhost:8000/docs). The API currently accepts
-engineered features, not raw transaction columns. The request body is deliberately
-shown below as a prototype contract; request schema validation is on the roadmap.
+a list of transaction IDs and their corresponding event timestamp. Every transaction must be already
+available in Feast.
 
 A request has this shape:
 
 ```json
-{
-  "features": [
+[
     {
-      "ID": "transaction-id",
-      "event_timestamp": "2022-09-01T00:20:00",
-      "Timestamp": "2022/09/01 00:20",
-      "From Bank": "10",
-      "To Bank": "10",
-      "Account": "8000EBD30",
-      "Account.1": "8000EBD30",
-      "Amount Received": 3697.34,
-      "Receiving Currency": "US Dollar",
-      "Amount Paid": 3697.34,
-      "Payment Currency": "US Dollar",
-      "Payment Format": "Reinvestment",
-      "Amount_Received_USD": 3697.34,
-      "Amount_Paid_USD": 3697.34,
-      "Account_Same": 1,
-      "Bank_Same": 1
+      "ID": "transaction-id", # UUID
+      "event_timestamp": "2022-09-01T00:20:00" # datetime
     }
-  ]
-}
+]
 ```
 
 The response currently contains one integer prediction for each feature record. It does
 not yet include calibrated probabilities, the applied threshold, or model metadata:
 
 ```json
-{"predictions": [0]}
+[{"prediction": [0], "probability": 0.99}]
 ```
 
 ### Feature Store
@@ -200,9 +189,12 @@ large review burden and is not an acceptable operating point without threshold t
 cost-based evaluation, and comparison with stronger baselines.
 
 The reported holdout contains 1,015,669 transactions, including 1,035 positive
-examples. These results were produced using the current random row split and should
-not be interpreted as production performance. PR-AUC, threshold analysis, and
-temporal/entity-aware validation are tracked in the roadmap.
+examples. These results were produced using the current random row split. Because the
+current features are row-local and raw account identifiers are excluded, repeated
+accounts do not create direct identity leakage. The result should still be treated as
+an optimistic baseline: related transactions may cross the split boundary, and the
+random split does not measure performance under temporal distribution shift. PR-AUC,
+threshold analysis, and temporal/entity-aware validation are tracked in the roadmap.
 
                 precision   recall   f1-score support
            0       1.00      0.98      0.99   1014634

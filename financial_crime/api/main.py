@@ -25,7 +25,8 @@ class PredictionRequest(BaseModel):
 
 
 class PredictionResponse(BaseModel):
-    predictions: list[Literal[0, 1]]
+    prediction: Literal[0, 1]
+    probability: float
 
 
 @lru_cache(maxsize=1)
@@ -37,7 +38,7 @@ def load_pipeline():
 
 
 @app.post("/predict")
-def predict(requests: list[PredictionRequest]) -> PredictionResponse:
+def predict(requests: list[PredictionRequest]) -> list[PredictionResponse]:
     """
     Perform inference using the trained ML pipeline.
 
@@ -59,12 +60,15 @@ def predict(requests: list[PredictionRequest]) -> PredictionResponse:
 
     # Perform inference
     logger.info("Making prediction")
-    y_pred = pipeline.predict(inference_data)
-    y_pred_list = y_pred.tolist()
-
-    # Summary stat on # fraud vs non-fraud predictions
-    values, counts = np.unique(y_pred_list, return_counts=True)
-    value_counts = dict(zip(values, counts))
-    logger.info(f"Predictions complete: {value_counts=}")
-
-    return PredictionResponse(predictions=y_pred_list)
+    probs = pipeline.predict_proba(inference_data)
+    probs_df = pd.DataFrame(probs, columns=pipeline.model.classes_)
+    results = pd.DataFrame({
+        'prediction': probs_df.idxmax(axis=1),
+        'probability': probs_df.max(axis=1)
+    })
+    response = [
+        PredictionResponse.model_validate(row) 
+        for row in results.to_dict(orient='records')
+    ]
+    logger.info(f"{response=}")
+    return response

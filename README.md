@@ -67,7 +67,7 @@ The batch path creates the persisted feature-engineering transformer and model p
 needed by the streaming path. The consumer receives raw transaction records, applies
 the persisted feature engineer, pushes the engineered record to Feast, and sends the
 transacton ID and event timestamp to the API. Feast is currently used for historical training
-retrieval and online feature writes; the API does not query Feast during prediction.
+retrieval and online feature writes.
 
 ## Roadmap
 

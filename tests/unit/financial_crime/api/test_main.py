@@ -6,39 +6,29 @@ import pandas as pd
 from financial_crime.api import main as api
 
 
-class FakePipeline:
-    model = type("Model", (), {"classes_": [0, 1]})()
-
-    def predict_proba(self, dataframe):
-        assert len(dataframe) == 2
-        return [[0.8, 0.2], [0.1, 0.9]]
-
-
-class FakeOnlineFeatures:
-    def to_df(self):
+class FakeFeatureClient:
+    def get(self, requests):
+        assert len(requests) == 2
         return pd.DataFrame({"feature": [1, 2]})
 
 
-class FakeStore:
-    def get_feature_service(self, name):
-        assert name == "transaction_v1"
-        return "service"
-
-    def get_online_features(self, features, entity_rows):
-        assert features == "service"
-        assert len(entity_rows) == 2
-        return FakeOnlineFeatures()
+class FakeInferenceClient:
+    def predict(self, features_df):
+        assert list(features_df["feature"]) == [1, 2]
+        return pd.DataFrame({"prediction": [0, 1], "probability": [0.8, 0.9]})
 
 
-def test_predict_returns_highest_probability(monkeypatch):
-    monkeypatch.setattr(api, "load_pipeline", lambda: FakePipeline())
-    monkeypatch.setattr(api, "FeatureStore", lambda path: FakeStore())
+def test_predict_returns_highest_probability():
     requests = [
         api.PredictionRequest(ID=uuid4(), event_timestamp=datetime(2022, 1, 1)),
         api.PredictionRequest(ID=uuid4(), event_timestamp=datetime(2022, 1, 2)),
     ]
 
-    response = api.predict(requests)
+    response = api.predict(
+        requests,
+        feature_client=FakeFeatureClient(),
+        inference_client=FakeInferenceClient(),
+    )
 
     assert [item.prediction for item in response] == [0, 1]
     assert [item.probability for item in response] == [0.8, 0.9]

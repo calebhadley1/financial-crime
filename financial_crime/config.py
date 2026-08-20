@@ -21,6 +21,9 @@ MODELS_DIR = PROJ_ROOT / "models"
 REPORTS_DIR = PROJ_ROOT / "reports"
 FIGURES_DIR = REPORTS_DIR / "figures"
 
+# ML Pipeline location
+PIPELINE_DIR = MODELS_DIR / "pipeline"
+
 # Feature Engineering Constants
 # Currency conversion rates as of 9/1/2022 via https://www.exchangerates.org.uk/historical/.../01_09_2022
 CURRENCY_MAP = {

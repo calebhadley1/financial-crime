@@ -40,5 +40,5 @@ for msg in tqdm(consumer):
     dt_cols = df_engineered.select_dtypes(include=["datetime64", "datetimetz"]).columns
     df_engineered[dt_cols] = df_engineered[dt_cols].astype(str)
     logger.info("Requesting API fraud detection...")
-    json = df_engineered[['ID', 'event_timestamp']].to_dict(orient="records")
+    json = df_engineered[["ID", "event_timestamp"]].to_dict(orient="records")
     requests.post(f"{api_url}/predict", json=json)

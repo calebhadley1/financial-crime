@@ -26,6 +26,7 @@ def main(
     features_path: Path = PROCESSED_DATA_DIR / "features.parquet",
     labels_path: Path | None = None,
     feature_engineer_path: Path = MODELS_DIR / "pipeline" / "feature_engineer.pkl",
+    feature_repo_path: Path = Path("financial_crime/feature_store/feature_repo"),
     # Output
     pipeline_dir: Path = MODELS_DIR / "pipeline",
     test_features_path: Path = PROCESSED_DATA_DIR / "test_features.csv",
@@ -56,9 +57,7 @@ def main(
     logger.info(f"Loaded {len(entity_df)} rows")
 
     logger.info("Retrieving Features from Feature Store...")
-    feature_store = FeatureStore(
-        "financial_crime/feature_store/feature_repo"
-    )  # Initialize the feature store
+    feature_store = FeatureStore(str(feature_repo_path))
     feature_service = feature_store.get_feature_service("transaction_v1")
     # Pull engineered features and labels from the feature store using the entity DataFrame
     training_data = feature_store.get_historical_features(

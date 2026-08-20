@@ -1,12 +1,11 @@
 from datetime import datetime
 from functools import lru_cache
-from typing import Any, Literal
+from typing import Literal
 from uuid import UUID
 
 from fastapi import FastAPI
 from feast import FeatureStore
 from loguru import logger
-import numpy as np
 import pandas as pd
 from pydantic import BaseModel
 
@@ -20,8 +19,9 @@ class PredictionRequest(BaseModel):
     """
     All requests must have a corresponding entry in the feature store
     """
+
     ID: UUID
-    event_timestamp: datetime    
+    event_timestamp: datetime
 
 
 class PredictionResponse(BaseModel):
@@ -62,13 +62,11 @@ def predict(requests: list[PredictionRequest]) -> list[PredictionResponse]:
     logger.info("Making prediction")
     probs = pipeline.predict_proba(inference_data)
     probs_df = pd.DataFrame(probs, columns=pipeline.model.classes_)
-    results = pd.DataFrame({
-        'prediction': probs_df.idxmax(axis=1),
-        'probability': probs_df.max(axis=1)
-    })
+    results = pd.DataFrame(
+        {"prediction": probs_df.idxmax(axis=1), "probability": probs_df.max(axis=1)}
+    )
     response = [
-        PredictionResponse.model_validate(row) 
-        for row in results.to_dict(orient='records')
+        PredictionResponse.model_validate(row) for row in results.to_dict(orient="records")
     ]
     logger.info(f"{response=}")
     return response

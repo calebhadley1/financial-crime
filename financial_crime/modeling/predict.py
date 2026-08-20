@@ -80,8 +80,8 @@ def main(
     logger.info(f"Loaded {len(inference_data)} rows from Feature Store")
 
     # Guard against accidental label leakage when reusing a raw dataset.
-    X = inference_data.drop(columns="Is Laundering")
-    y = inference_data["Is Laundering"]  # TODO: Y isnt coming through
+    X = inference_data.drop(columns="Is Laundering", errors="ignore")
+    y = df.get("Is Laundering")
 
     logger.info(f"Loading pipeline from {pipeline_dir}...")
     pipeline = InferencePipeline.load(pipeline_dir)
@@ -89,11 +89,14 @@ def main(
     logger.info("Performing inference...")
     y_pred = pipeline.predict(X)
 
-    logger.info("Generating classification report...")
-    logger.info(y)
-    logger.info(y_pred)
-    report = classification_report(y, y_pred)
-    logger.info(f"\n{report}")
+    if y is not None:
+        logger.info("Generating classification report...")
+        logger.info(y)
+        logger.info(y_pred)
+        report = classification_report(y, y_pred)
+        logger.info(f"\n{report}")
+    else:
+        logger.info("No labels found in input; skipping classification report.")
 
     logger.info(f"Saving predictions to {predictions_path}...")
     np.savetxt(predictions_path, y_pred, delimiter=",")

@@ -23,6 +23,7 @@ not a production financial-crime detection service.
 - FastAPI model serving in Docker
 - Kafka-based streaming simulation from transaction input to API prediction
 - Academic exploratory analysis and modeling in the [papers](papers/README.md) directory
+- Automated test suites (unit and integration)
 
 Current limitations are tracked in the roadmap below. In particular, the evaluation
 currently uses a random row split and the streaming stack is a local simulation. Raw
@@ -66,7 +67,6 @@ retrieval and online feature writes; the API does not query Feast during predict
 
 The project is intentionally being developed in stages. The next improvements are:
 
-- [ ] Add integration tests for feature engineering, train/inference parity, and `/predict`.
 - [ ] Add temporal and entity-aware validation to reduce leakage from related transactions.
 - [ ] Report PR-AUC, threshold selection, confusion matrix, and review-volume tradeoffs.
 - [ ] Replace untyped API dictionaries with a versioned request schema and probability output.

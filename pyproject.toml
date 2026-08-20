@@ -24,6 +24,7 @@ dependencies = [
     "mkdocs",
     "pandas",
     "pip",
+    "prometheus-fastapi-instrumentator>=7.1.0",
     "python-dotenv",
     "ruff",
     "scikit-learn",

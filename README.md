@@ -143,6 +143,10 @@ Open [localhost:8000/docs](http://localhost:8000/docs). The API currently accept
 a list of transaction IDs and their corresponding event timestamp. Every transaction must be already
 available in Feast.
 
+Prometheus metrics are exposed at [localhost:8000/metrics](http://localhost:8000/metrics).
+When the full Compose stack is running, Prometheus is available at
+[localhost:9090](http://localhost:9090) and scrapes the API every 15 seconds.
+
 A request has this shape:
 
 ```json

@@ -2,7 +2,9 @@ from datetime import datetime
 from uuid import uuid4
 
 import pandas as pd
+from fastapi.testclient import TestClient
 
+from financial_crime.api.main import app
 from financial_crime.api.routers.prediction_router import predict
 from financial_crime.api.schemas import PredictionRequest
 
@@ -33,3 +35,12 @@ def test_predict_returns_highest_probability():
 
     assert [item.prediction for item in response] == [0, 1]
     assert [item.probability for item in response] == [0.8, 0.9]
+
+
+def test_metrics_endpoint_exposes_prometheus_metrics():
+    client = TestClient(app)
+    client.get("/health/live")
+    response = client.get("/metrics")
+
+    assert response.status_code == 200
+    assert "http_requests_total" in response.text

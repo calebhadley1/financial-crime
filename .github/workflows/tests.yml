@@ -27,6 +27,10 @@ jobs:
       - name: Install dependencies
         run: uv sync --locked
 
+      - name: Apply Feast feature definitions
+        working-directory: financial_crime/feature_store/feature_repo
+        run: uv run feast apply
+
       - name: Run tests with coverage
         run: uv run pytest --cov=financial_crime --cov-report=term-missing --cov-report=xml
 

@@ -75,10 +75,8 @@ The project is intentionally being developed in stages. The next improvements ar
 
 - [ ] Add temporal and entity-aware validation to reduce leakage from related transactions.
 - [ ] Report PR-AUC, threshold selection, confusion matrix, and review-volume tradeoffs.
-- [ ] Replace untyped API dictionaries with a versioned request schema and probability output.
 - [ ] Add API health checks, request timeouts/retries, structured metrics, and model metadata.
 - [ ] Pin and document the exact dataset version, provenance, license, and expected artifacts.
-- [ ] Add CI for formatting, linting, tests, and a lightweight training/inference smoke test.
 - [ ] Register models and evaluation results with MLflow.
 - [ ] Explore graph-based detection with synthetic data: https://github.com/SantanderAI/gen-fraud-graph
 

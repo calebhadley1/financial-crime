@@ -3,6 +3,12 @@
 <a target="_blank" href="https://cookiecutter-data-science.drivendata.org/">
     <img src="https://img.shields.io/badge/CCDS-Project%20template-328F97?logo=cookiecutter" />
 </a>
+<a href="https://github.com/calebhadley1/financial-crime/actions/workflows/tests.yml">
+  <img src="https://github.com/calebhadley1/financial-crime/actions/workflows/tests.yml/badge.svg" alt="Tests" />
+</a>
+<a href="https://github.com/calebhadley1/financial-crime/actions/workflows/tests.yml">
+  <img src="https://raw.githubusercontent.com/calebhadley1/financial-crime/main/coverage.svg" alt="Coverage" />
+</a>
 
 This repository demonstrates an end-to-end machine learning prototype for transaction
 laundering detection. Raw transaction data is prepared in batch, transformed into

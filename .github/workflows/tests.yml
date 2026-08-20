@@ -41,6 +41,7 @@ jobs:
           path: |
             .coverage
             coverage.xml
+          include-hidden-files: true
 
   update-coverage-badge:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'

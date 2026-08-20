@@ -9,6 +9,7 @@ class FeatureClient:
     """
     Encapsulates communication with Feast Feature Store
     """
+
     def __init__(self, feature_store_repo_path, feature_service_name):
         self.feature_store = FeatureStore(feature_store_repo_path)
         self.feature_service = self.feature_store.get_feature_service(feature_service_name)

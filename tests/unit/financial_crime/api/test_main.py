@@ -3,7 +3,8 @@ from uuid import uuid4
 
 import pandas as pd
 
-from financial_crime.api import main as api
+from financial_crime.api.routers.prediction_router import predict
+from financial_crime.api.schemas import PredictionRequest
 
 
 class FakeFeatureClient:
@@ -20,11 +21,11 @@ class FakeInferenceClient:
 
 def test_predict_returns_highest_probability():
     requests = [
-        api.PredictionRequest(ID=uuid4(), event_timestamp=datetime(2022, 1, 1)),
-        api.PredictionRequest(ID=uuid4(), event_timestamp=datetime(2022, 1, 2)),
+        PredictionRequest(ID=uuid4(), event_timestamp=datetime(2022, 1, 1)),
+        PredictionRequest(ID=uuid4(), event_timestamp=datetime(2022, 1, 2)),
     ]
 
-    response = api.predict(
+    response = predict(
         requests,
         feature_client=FakeFeatureClient(),
         inference_client=FakeInferenceClient(),

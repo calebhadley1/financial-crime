@@ -75,14 +75,14 @@ The project is intentionally being developed in stages. The next improvements ar
 
 - [ ] Add temporal and entity-aware validation to reduce leakage from related transactions.
 - [ ] Report PR-AUC, threshold selection, confusion matrix, and review-volume tradeoffs.
-- [ ] Add API health checks, request timeouts/retries, structured metrics, and model metadata.
-- [ ] Pin and document the exact dataset version, provenance, license, and expected artifacts.
 - [ ] Register models and evaluation results with MLflow.
 - [ ] Explore graph-based detection with synthetic data: https://github.com/SantanderAI/gen-fraud-graph
 
 ## Setup
 ### Download Source Data
 - Download the required input dataset from https://www.kaggle.com/datasets/ealtman2019/ibm-transactions-for-anti-money-laundering-aml
+- I used Version 1 of the dataset. As of August 2026 there are no new versions published, but Kaggle retains all versions should the data get updated in the future. The dataset is licensed through [Community Data License Agreement – Sharing – Version 1.0](https://cdla.dev/sharing-1-0/)
+- The dataset contains a three different data sizes (Small, Medium, Large) with two different frequencies of laundering density (Low, High) totaling 6 datasets. I used the HI-Small datasaets for the sake of this project which contain roughly 5 million transactions and 500K bank accounts with 0.1% laundering rate
 - Copy the `HI-Small_accounts.csv`, `HI-Small_Patterns.txt` and `HI-Small_Trans.csv` to `data/raw`
 ### Python Environment
 Install [uv](https://docs.astral.sh/uv/) and run:

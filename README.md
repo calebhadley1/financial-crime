@@ -210,6 +210,8 @@ an optimistic baseline: related transactions may cross the split boundary, and t
 random split does not measure performance under temporal distribution shift. PR-AUC,
 threshold analysis, and temporal/entity-aware validation are tracked in the roadmap.
 
+Using basic feature engineering (USD Standardization of differing currencies, checks if to/from accounts and banks are the same, z-score standardization) + preprocessing (one-hot encoding) we get the following classification report:
+
                 precision   recall   f1-score support
            0       1.00      0.98      0.99   1014634
            1       0.03      0.66      0.05      1035

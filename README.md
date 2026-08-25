@@ -31,15 +31,6 @@ not a production financial-crime detection service.
 - Academic exploratory analysis and modeling in the [papers](papers/README.md) directory
 - Automated test suites (unit and integration)
 
-Current limitations are tracked in the roadmap below. In particular, the evaluation
-currently uses a random row split and the streaming stack is a local simulation. Raw
-account and bank identifiers are excluded from model inputs, and the current features
-are row-local, so repeated entities do not create direct identity leakage. However, a
-random split may still produce an optimistic estimate when related transactions or
-laundering patterns are correlated, and it does not measure performance under temporal
-distribution shift. The dataset must be downloaded separately because the source data
-is not redistributed here.
-
 ## Architecture
 ```mermaid
 flowchart LR

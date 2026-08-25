@@ -73,8 +73,6 @@ retrieval and online feature writes.
 
 The project is intentionally being developed in stages. The next improvements are:
 
-- [ ] Add temporal and entity-aware validation to reduce leakage from related transactions.
-- [ ] Report PR-AUC, threshold selection, confusion matrix, and review-volume tradeoffs.
 - [ ] Register models and evaluation results with MLflow.
 - [ ] Explore graph-based detection with synthetic data: https://github.com/SantanderAI/gen-fraud-graph
 

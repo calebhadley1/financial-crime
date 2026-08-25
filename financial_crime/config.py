@@ -49,10 +49,11 @@ CATEGORICAL_FEATURES = ["Receiving Currency", "Payment Currency", "Payment Forma
 
 # Model Training Constants
 RANDOM_STATE = 42
-MODEL_N_ESTIMATORS = 150
-MODEL_MAX_DEPTH = 3
-SAMPLING_STRATEGY = 0.1
+MODEL_N_ESTIMATORS = 65
+MODEL_MAX_DEPTH = 4
+SAMPLING_STRATEGY = 0.5
 TEST_SIZE = 0.2
+DECISION_THRESHOLD = 0.536
 
 # If tqdm is installed, configure loguru with tqdm.write
 # https://github.com/Delgan/loguru/issues/135

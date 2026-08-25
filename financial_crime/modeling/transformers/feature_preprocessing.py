@@ -84,6 +84,8 @@ class FeaturePreprocessor:
             "Account",
             "To Bank",
             "Account.1",
+            "account_pair",
+            "pair_transaction_count",
         ]
         logger.debug(f"Dropping columns: {cols_to_drop}")
         X = X.drop(cols_to_drop, axis=1, errors="ignore")

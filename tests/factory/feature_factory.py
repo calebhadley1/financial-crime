@@ -26,3 +26,6 @@ class EngineeredFeatureFactory(factory.Factory):
     Amount_Paid_USD: float = 3697.34
     Account_Same: int = 1
     Bank_Same: int = 1
+    Account_Transacted_With_Account1_Before: int = 0
+    account_pair: str = "8000EBD30::8000EBD31"
+    pair_transaction_count: int = 1

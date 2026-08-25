@@ -13,12 +13,12 @@ from loguru import logger
 import numpy as np
 import pandas as pd
 from sklearn.metrics import classification_report
-from sklearn.model_selection import train_test_split
 
 from financial_crime.config import (
     RANDOM_STATE,
     SAMPLING_STRATEGY,
     TEST_SIZE,
+    DECISION_THRESHOLD
 )
 from financial_crime.modeling.pipelines.inference_pipeline import InferencePipeline
 from financial_crime.modeling.transformers.feature_preprocessing import FeaturePreprocessor
@@ -72,14 +72,16 @@ class TrainingPipeline:
         Returns:
             Tuple of (X_train_raw, X_test_raw, y_train, y_test)
         """
-        logger.info("Splitting data into train/test sets on raw data...")
-        X_train_raw, X_test_raw, y_train, y_test = train_test_split(
-            X,
-            y,
-            test_size=self.test_size,
-            stratify=y,  # Maintains class distribution
-            random_state=self.random_state,
-        )
+        logger.info("Splitting data into chronological train/test sets on raw data...")
+        if "event_timestamp" not in X.columns:
+            raise ValueError("Chronological splitting requires an 'event_timestamp' column")
+
+        sort_order = pd.to_datetime(X["event_timestamp"]).sort_values().index
+        X_ordered = X.loc[sort_order]
+        y_ordered = y.loc[sort_order]
+        split_index = int(len(X_ordered) * (1 - self.test_size))
+        X_train_raw, X_test_raw = X_ordered.iloc[:split_index], X_ordered.iloc[split_index:]
+        y_train, y_test = y_ordered.iloc[:split_index], y_ordered.iloc[split_index:]
         logger.info(f"Training set shape: {X_train_raw.shape}, Test set shape: {X_test_raw.shape}")
         return X_train_raw, X_test_raw, y_train, y_test
 
@@ -104,11 +106,14 @@ class TrainingPipeline:
             sampling_strategy=self.sampling_strategy, random_state=self.random_state
         )
         X_train_resampled, y_train_resampled = self.resampler.fit_resample(
-            X_train, y_train.values.flatten()
+            X_train, y_train
         )
+        X_train_resampled = X_train_resampled.sort_index()
+        y_train_resampled = y_train_resampled.sort_index()
+        y_train_resampled_flattened = y_train_resampled.values.flatten()
 
-        logger.info(f"Resampled class distribution: {Counter(y_train_resampled)}")
-        return X_train_resampled, y_train_resampled
+        logger.info(f"Resampled class distribution: {Counter(y_train_resampled_flattened)}")
+        return X_train_resampled, y_train_resampled_flattened
 
     def preprocess_features(
         self, X_train: pd.DataFrame, X_test: pd.DataFrame, fit: bool = True
@@ -136,6 +141,8 @@ class TrainingPipeline:
             "Account",
             "Account.1",
             "labeler",
+            "account_pair",
+            "pair_transaction_count",
         ]
         X_train = X_train.drop(columns=cols_to_drop, errors="ignore")
         X_test = X_test.drop(columns=cols_to_drop, errors="ignore")
@@ -201,7 +208,9 @@ class TrainingPipeline:
         pipeline = InferencePipeline(self.preprocessor, model)
 
         logger.info("Testing pipeline on holdout set")
-        y_pred = pipeline.predict(X_test)
+        y_prob = pipeline.predict_proba(X_test)[:, 1]
+        y_pred = (y_prob >= DECISION_THRESHOLD).astype(int)
+        
         logger.info("Generating classification report...")
         report = classification_report(y_test, y_pred)
         logger.info(f"\n{report}")

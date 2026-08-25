@@ -26,3 +26,6 @@ class EngineeredFeature(BaseModel):
     Amount_Paid_USD: float
     Account_Same: int
     Bank_Same: int
+    Account_Transacted_With_Account1_Before: int
+    account_pair: str
+    pair_transaction_count: int

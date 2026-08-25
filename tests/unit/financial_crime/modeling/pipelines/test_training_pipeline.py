@@ -13,6 +13,7 @@ def make_training_data():
             "Payment Format": ["Cash", "Wire"] * 6,
             "feature": list(range(12)),
             "ID": [str(value) for value in range(12)],
+            "event_timestamp": pd.date_range("2022-01-01", periods=12),
         }
     ), pd.DataFrame({"Is Laundering": [0, 1] * 6})
 

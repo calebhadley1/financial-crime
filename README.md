@@ -195,30 +195,42 @@ uv run pytest --cov=financial_crime
 
 ## Modeling Results
 
-The current model is a baseline for an extremely imbalanced classification problem.
-Accuracy alone is therefore not an appropriate success criterion. The positive class
-currently has high recall but very low precision: approximately 66% of positive
-examples are found, while only 3% of flagged transactions are positive. This creates a
-large review burden and is not an acceptable operating point without threshold tuning,
-cost-based evaluation, and comparison with stronger baselines.
+The following model results were determined through EDA spanning univariate, bivariate, and multivariate exploration, feature engineering, forward feature selection, and hyperparameter tuning of the max_depth, n_estimators, and decision threshold using PR-AUC and Optuna across various models. Ultimately, I found the Gradient Boosting classifier had the strongest performance on this dataset.
 
-The reported holdout contains 1,015,669 transactions, including 1,035 positive
-examples. These results were produced using the current random row split. Because the
-current features are row-local and raw account identifiers are excluded, repeated
-accounts do not create direct identity leakage. The result should still be treated as
-an optimistic baseline: related transactions may cross the split boundary, and the
-random split does not measure performance under temporal distribution shift. PR-AUC,
-threshold analysis, and temporal/entity-aware validation are tracked in the roadmap.
+Feature Engineering was essential to find the relationships between accounts. We created the following features:
+- Was the sending and receiving Account the same?
+- Was the sending and receiving Bank the same?
+- One-Hot encoding for all categorical features (Payment Format, Payment Currency, Receiving Currency)
+- What is the Account's frequency of transactions by payment format across different windows (10sec, 30sec, 1min, ..., All Time)
+- Has the Paying Account sent money to the Receiving Account before?
+- How often does the Account use the type of Payment format? (For example if they only use credit card but suddenly use Bitcoin)
 
-Using basic feature engineering (USD Standardization of differing currencies, checks if to/from accounts and banks are the same, z-score standardization) + preprocessing (one-hot encoding) we get the following classification report:
+For hyperparamter tuning and model evaluation I utilized temporal data splitting to ensure no data leakage, since we engineer features that are time dependent (such as whether two accounts have interacted before). The reported results were evaluated on a holdout set containing 1,003,970 negative class and 1,699 positive class instances (0.001% fraud).
 
-                precision   recall   f1-score support
-           0       1.00      0.98      0.99   1014634
-           1       0.03      0.66      0.05      1035
+Initial baseline modeling showed that models learned to always predict the negative class due to extreme class imbalance. After implementing undersampling of the majority class to a 2:1 negative/positive ratio we see increased positive class performance, but it did not fully transfer into the holdout set where true class imbalance is found. Instead there is high recall and extremely low precision. This model may be good enough for a team with a large number of human resources to review fraud alerts. We catch the majority of fraud but have many false positive cases as well. See the below classification report and precision recall curve on a holdout set using the hyperparamter tuned model:
 
-    accuracy                           0.98   1015669
-    macro avg       0.51      0.82     0.52   1015669
-    weighted avg    1.00      0.98     0.99   1015669
+Gradient Boosting Classifier:
+n_estimators: 65
+max_depth: 4
+decision_threshold: 0.536
+
+```
+              precision    recall  f1-score   support
+
+           0       1.00      0.94      0.97   1003970
+           1       0.03      0.90      0.05      1699
+
+    accuracy                           0.94   1005669
+   macro avg       0.51      0.92      0.51   1005669
+weighted avg       1.00      0.94      0.97   1005669
+```
+
+![PR-AUC](reports/figures/pr-auc_threshold_536_ibm.png)
+
+To create other options for companies which do not have an ability to work through large false positive counts, I used decision boundary tuning. We can see in the below PrecisionRecallDisplay that moving the threshold from 0.536 to 0.98 can improve the precision at the expense of recall, giving companies less alerts to work through while still catching a large count of fraudulent transactions. For example a threshold of 0.98 yields Precision = 0.81, Recall = 0.13.
+
+![PR-AUC](reports/figures/pr-auc_threshold_98_ibm.png)
+
 
 ## Generated Artifacts
 

@@ -22,6 +22,7 @@ project = Project(name="feature_store", description="A project for driver statis
 # Define an entity for the driver. You can think of an entity as a primary key used to
 # fetch features.
 transaction = Entity(name="transaction", join_keys=["ID"], value_type=ValueType.STRING)
+account_pair = Entity(name="account_pair", join_keys=["account_pair"], value_type=ValueType.STRING)
 
 # Read data from parquet files. Parquet is convenient for local development mode. For
 # production, you can use your favorite DWH, such as BigQuery. See Feast documentation
@@ -64,6 +65,9 @@ transaction_fv = FeatureView(
         Field(name="Amount_Paid_USD", dtype=Float32),
         Field(name="Account_Same", dtype=Int64),
         Field(name="Bank_Same", dtype=Int64),
+        Field(name="Account_Transacted_With_Account1_Before", dtype=Int64),
+        Field(name="account_pair", dtype=String),
+        Field(name="pair_transaction_count", dtype=Int64),
     ],
     online=True,
     source=transaction_push_source,
@@ -107,4 +111,21 @@ transaction_v1 = FeatureService(
         transaction_fraud_labels,  # Include labels for training
     ],
     logging_config=LoggingConfig(destination=FileLoggingDestination(path="data")),
+)
+
+account_pair_history = FeatureView(
+    name="account_pair_history",
+    entities=[account_pair],
+    ttl=timedelta(),
+    schema=[
+        Field(name="account_pair", dtype=String),
+        Field(name="pair_transaction_count", dtype=Int64),
+    ],
+    online=True,
+    source=transaction_push_source,
+)
+
+account_pair_v1 = FeatureService(
+    name="account_pair_v1",
+    features=[account_pair_history],
 )

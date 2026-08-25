@@ -7,7 +7,7 @@ import pandas as pd
 from sklearn.metrics import classification_report
 import typer
 
-from financial_crime.config import MODELS_DIR, PROCESSED_DATA_DIR
+from financial_crime.config import DECISION_THRESHOLD, MODELS_DIR, PROCESSED_DATA_DIR
 from financial_crime.modeling.pipelines.inference_pipeline import InferencePipeline
 from financial_crime.modeling.transformers.feature_engineering import FeatureEngineer
 
@@ -74,20 +74,23 @@ def main(
 
     feature_service = feature_store.get_feature_service("transaction_v1")
     # Pull engineered features and labels from the feature store using the entity DataFrame
+    # TODO: The 1_000 indexing is a hack. I should paginate results from feature store instead
     inference_data = feature_store.get_online_features(
-        features=feature_service, entity_rows=entity_rows[:100]
+        features=feature_service, entity_rows=entity_rows[:1_000]
     ).to_df()
     logger.info(f"Loaded {len(inference_data)} rows from Feature Store")
 
     # Guard against accidental label leakage when reusing a raw dataset.
     X = inference_data.drop(columns="Is Laundering", errors="ignore")
-    y = df.get("Is Laundering")
+    # TODO: Drop first 1000 rows hardcoding
+    y = df[:1_000].get("Is Laundering")
 
     logger.info(f"Loading pipeline from {pipeline_dir}...")
     pipeline = InferencePipeline.load(pipeline_dir)
 
     logger.info("Performing inference...")
-    y_pred = pipeline.predict(X)
+    y_prob = pipeline.predict_proba(X)[:, 1]
+    y_pred = (y_prob >= DECISION_THRESHOLD).astype(int)
 
     if y is not None:
         logger.info("Generating classification report...")

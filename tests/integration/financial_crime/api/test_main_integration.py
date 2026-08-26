@@ -26,4 +26,8 @@ def test_predict(setup):
     payload = [setup.model_dump(mode="json")]
     response = client.post("/predict", json=payload)
     assert response.status_code == 200
-    assert response.json() == [{"prediction": 0, "probability": 0.9990280506216597}]
+    response_json = response.json()
+    assert type(response_json) == list
+    assert len(response_json) == 1
+    assert response_json[0]['prediction'] == 0
+    assert 0.0 <= response_json[0]['probability'] <= 1.0

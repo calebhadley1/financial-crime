@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 
 import financial_crime.modeling.predict as predict
@@ -33,8 +34,10 @@ class FakePipeline:
     def load(path):
         return FakePipeline()
 
-    def predict(self, dataframe):
-        return [1]
+    def predict_proba(self, dataframe):
+        return np.array(
+            [[0.1, 0.9]]
+        )
 
 
 def test_main_pushes_features_predicts_and_writes(monkeypatch, tmp_path):

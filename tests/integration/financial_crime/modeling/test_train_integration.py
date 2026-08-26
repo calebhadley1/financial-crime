@@ -18,9 +18,7 @@ def make_training_data():
         )
         for value in range(24)
     ]
-    data = pd.DataFrame(
-        [feature.model_dump(mode="python", by_alias=True) for feature in features]
-    )
+    data = pd.DataFrame([feature.model_dump(mode="python", by_alias=True) for feature in features])
     data["Is Laundering"] = [0, 1] * 12
     return data
 

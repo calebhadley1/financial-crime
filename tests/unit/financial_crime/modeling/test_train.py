@@ -1,11 +1,13 @@
 import pandas as pd
 
-import financial_crime.modeling.train as train
+from financial_crime.modeling import train
 
 
 class FakeHistoricalFeatures:
     def to_df(self):
-        return pd.DataFrame({"ID": ["a"], "event_timestamp": ["2022-01-01"], "feature": [1], "Is Laundering": [0]})
+        return pd.DataFrame(
+            {"ID": ["a"], "event_timestamp": ["2022-01-01"], "feature": [1], "Is Laundering": [0]}
+        )
 
 
 class FakeStore:

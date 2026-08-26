@@ -2,8 +2,8 @@ import os
 import uuid
 
 import pytest
-from kafka import KafkaConsumer, KafkaProducer
 
+from kafka import KafkaConsumer, KafkaProducer
 
 pytestmark = pytest.mark.integration
 

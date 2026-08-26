@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-import financial_crime.modeling.predict as predict
+from financial_crime.modeling import predict
 
 
 class FakeFeatureEngineer:
@@ -35,9 +35,7 @@ class FakePipeline:
         return FakePipeline()
 
     def predict_proba(self, dataframe):
-        return np.array(
-            [[0.1, 0.9]]
-        )
+        return np.array([[0.1, 0.9]])
 
 
 def test_main_pushes_features_predicts_and_writes(monkeypatch, tmp_path):
@@ -48,8 +46,18 @@ def test_main_pushes_features_predicts_and_writes(monkeypatch, tmp_path):
     monkeypatch.setattr(predict, "FeatureEngineer", FakeFeatureEngineer)
     monkeypatch.setattr(predict, "FeatureStore", lambda path: FakeStore())
     monkeypatch.setattr(predict, "InferencePipeline", FakePipeline)
-    monkeypatch.setattr(predict.np, "savetxt", lambda path, values, delimiter: saved.update(path=path, values=values, delimiter=delimiter))
+    monkeypatch.setattr(
+        predict.np,
+        "savetxt",
+        lambda path, values, delimiter: saved.update(
+            path=path, values=values, delimiter=delimiter
+        ),
+    )
 
-    predict.main(input_path=input_path, pipeline_dir=tmp_path / "pipeline", predictions_path=predictions_path)
+    predict.main(
+        input_path=input_path,
+        pipeline_dir=tmp_path / "pipeline",
+        predictions_path=predictions_path,
+    )
 
     assert saved == {"path": predictions_path, "values": [1], "delimiter": ","}

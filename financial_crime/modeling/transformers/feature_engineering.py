@@ -108,7 +108,15 @@ class FeatureEngineer:
         )
 
         # Calculate how often Account makes a given type of Payment (e.g. cash, credit card, etc.)
-        payment_cols = [col for col in X.columns if col.startswith("Payment Format_")]
+        payment_formats = [
+            "ACH",
+            "Bitcoin",
+            "Cash",
+            "Cheque",
+            "Credit Card",
+            "Reinvestment",
+            "Wire",
+        ]
         windows = {
             "10s": "Tx_Last_10_Sec",
             "30s": "Tx_Last_30_Sec",
@@ -118,21 +126,34 @@ class FeatureEngineer:
             "1D": "Tx_Last_1_Day",
             "10D": "Tx_Last_10_Days",
         }
-        grouped = X.groupby("Account")
-        for window_size, window_label in windows.items():
-            for pay_col in payment_cols:
-                # Create a clean column name (e.g., 'Payment Format_Bitcoin_last_5_min')
-                new_col_name = f"{pay_col}_Last_{window_label.replace('Tx_Last_', '')}"
+        for payment_format in payment_formats:
+            # 1. Create a temporary numeric series (1 for match, 0 for mismatch)
+            # This prevents the DataError by ensuring the rolling data is numeric
+            is_matching_type = (X["Payment Format"] == payment_format).astype(int)
 
-                # Calculate the rolling sum of 1s and 0s
+            # 2. Re-attach temporarily to a dummy dataframe alongside the grouping keys
+            # This ensures groupby and rolling 'on' can still find their columns
+            temp_df = X[["Account", "event_timestamp"]].copy()
+            temp_df["is_match"] = is_matching_type
+
+            # 3. Group and run a standard rolling sum
+            grouped = temp_df.groupby("Account")
+
+            for window_size, window_label in windows.items():
+                time_suffix = window_label.replace("Tx_Last_", "")
+                new_col_name = f"Payment Format_{payment_format}_Last_{time_suffix}"
+
+                # Standard .sum() works seamlessly now that data is numeric
                 X[new_col_name] = (
-                    grouped.rolling(window_size, on="event_timestamp")[pay_col]
-                    .sum()  # Use .sum() because 1 + 1 + 0 = 2 transactions of this type
-                    .values
+                    grouped.rolling(window_size, on="event_timestamp")["is_match"].sum().values
                 )
         # Calculate the "All Time" number of transactions by Payment Format
-        for pay_col in payment_cols:
-            X[f"{pay_col}_Tx_All_Time"] = X.groupby("Account")[pay_col].cumsum()
+        for payment_format in payment_formats:
+            # 1. Create a boolean series (True/1 where it matches, False/0 where it doesn't)
+            is_matching_type = (X["Payment Format"] == payment_format).astype(int)
+            # 2. Group the 1s and 0s by Account and calculate the cumulative sum
+            new_col_name = f"Payment Format_{payment_format}_Tx_All_Time"
+            X[new_col_name] = is_matching_type.groupby(X["Account"]).cumsum()
 
         return X
 

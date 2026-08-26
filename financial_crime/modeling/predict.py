@@ -20,8 +20,6 @@ def main(
     input_path: Path = PROCESSED_DATA_DIR / "dataset_50k.csv",
     pipeline_dir: Path = MODELS_DIR / "pipeline",
     # Output
-    test_features_path: Path = PROCESSED_DATA_DIR / "test_features.parquet",
-    test_labels_path: Path = PROCESSED_DATA_DIR / "test_labels.parquet",
     predictions_path: Path = PROCESSED_DATA_DIR / "test_predictions.csv",
 ):
     """
@@ -32,26 +30,11 @@ def main(
 
     For evaluation: By default, runs predictions on test data that was held out during
     training and compares against true labels.
-
-    For inference on new data: Pass raw_features_path to the raw CSV file and set
-    raw_labels_path=None to skip evaluation.
-
-    NOTE: test_features.csv contains RAW data from train.py (not preprocessed).
-    The pipeline applies all transformations automatically.
     """
     logger.info("Performing inference with ML pipeline...")
 
-    # In the real world we would not be doing the insertion into the feature store here
-    # We would instead have a feature eng job that does this and loads into the store separately
-    # The API will only be responsible for preprocessing/predicting the engineered features
-
     logger.info(f"Loading raw dataset from {input_path}...")
     df = pd.read_csv(input_path)
-
-    logger.info("-" * 50)
-    logger.info(
-        "TODO: Extract this into a standalone orchestrator it should not be in predict file"
-    )
 
     logger.info("Loading FeatureEngineer")
     feature_engineer = FeatureEngineer.load(pipeline_dir / "feature_engineer.pkl")
@@ -59,12 +42,13 @@ def main(
     logger.info("Applying FE to holdout set...")
     df_engineered = feature_engineer.fit_transform(df)
 
+    # TODO: Create a class for feature store interaction. We replicate this code a bit.
+
     logger.info("Pushing Data into the FS...")
     feature_store = FeatureStore(
         "financial_crime/feature_store/feature_repo"
     )  # Initialize the feature store
     feature_store.push("transaction_push_source", df_engineered)
-    logger.info("-" * 50)
 
     logger.info("Retrieving Features from Feature Store...")
     logger.info(f"Loading {len(df_engineered)} rows from FS")
@@ -74,16 +58,29 @@ def main(
 
     feature_service = feature_store.get_feature_service("transaction_v1")
     # Pull engineered features and labels from the feature store using the entity DataFrame
-    # TODO: The 1_000 indexing is a hack. I should paginate results from feature store instead
-    inference_data = feature_store.get_online_features(
-        features=feature_service, entity_rows=entity_rows[:1_000]
-    ).to_df()
+    # SQLite throws OperationalError: too many SQL variables at full entity rows, so batching is performed
+    SQLITE_CHUNK_SIZE = 10_000
+    df_chunks = []
+    # Fetch from Redis in safe chunks
+    for i in range(0, len(entity_rows), SQLITE_CHUNK_SIZE):
+        chunk = entity_rows[i : i + SQLITE_CHUNK_SIZE]
+
+        response = feature_store.get_online_features(
+            features=feature_service,
+            entity_rows=chunk,
+        )
+
+        # Convert directly to DataFrame and store the reference
+        df_chunks.append(response.to_df())
+
+    # Concatenate all fragments into one master DataFrame
+    inference_data = pd.concat(df_chunks, ignore_index=True)
+
     logger.info(f"Loaded {len(inference_data)} rows from Feature Store")
 
     # Guard against accidental label leakage when reusing a raw dataset.
     X = inference_data.drop(columns="Is Laundering", errors="ignore")
-    # TODO: Drop first 1000 rows hardcoding
-    y = df[:1_000].get("Is Laundering")
+    y = df.get("Is Laundering")
 
     logger.info(f"Loading pipeline from {pipeline_dir}...")
     pipeline = InferencePipeline.load(pipeline_dir)

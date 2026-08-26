@@ -65,12 +65,6 @@ def main(
     ).to_df()
     logger.info(f"Loaded {len(training_data)} rows from Feature Store")
 
-    logger.info("Extracting labels from 'Is Laundering' column in training data...")
-    if "Is Laundering" not in training_data.columns:
-        raise ValueError(
-            "Column 'Is Laundering' not found in training data. "
-            "Ensure the label view includes this column."
-        )
     X = training_data.drop(columns=["Is Laundering"])
     y = training_data[["Is Laundering"]]
 

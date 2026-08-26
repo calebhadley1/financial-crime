@@ -136,6 +136,8 @@ Prometheus metrics are exposed at [localhost:8000/metrics](http://localhost:8000
 When the full Compose stack is running, Prometheus is available at
 [localhost:9090](http://localhost:9090) and scrapes the API every 15 seconds.
 
+Grafana is exposed at [localhost:3000](http://localhost:3000) to build dashboards on the API metrics
+
 A request has this shape:
 
 ```json

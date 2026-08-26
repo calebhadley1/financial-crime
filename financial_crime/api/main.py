@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from prometheus_client import make_asgi_app
 
-from financial_crime.api.routers import health_router, metrics_router, prediction_router
+from financial_crime.api.routers import health_router, prediction_router
 
 app = FastAPI()
 

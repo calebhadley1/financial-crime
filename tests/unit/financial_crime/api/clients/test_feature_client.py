@@ -39,8 +39,12 @@ def test_feature_client_get_returns_online_features(monkeypatch):
     )
 
     requests = [
-        PredictionRequest(ID=uuid4(), event_timestamp=datetime(2022, 1, 1, tzinfo=ZoneInfo("America/New_York"))),
-        PredictionRequest(ID=uuid4(), event_timestamp=datetime(2022, 1, 2, tzinfo=ZoneInfo("America/New_York"))),
+        PredictionRequest(
+            ID=uuid4(), event_timestamp=datetime(2022, 1, 1, tzinfo=ZoneInfo("America/New_York"))
+        ),
+        PredictionRequest(
+            ID=uuid4(), event_timestamp=datetime(2022, 1, 2, tzinfo=ZoneInfo("America/New_York"))
+        ),
     ]
 
     client = FeatureClient(

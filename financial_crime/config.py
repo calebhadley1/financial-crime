@@ -43,6 +43,50 @@ CURRENCY_MAP = {
     "Shekel": 0.2943,
     "Saudi Riyal": 0.266,
 }
+# Unique list of formats extracted from "Payment Format" column
+PAYMENT_FORMATS = [
+    "ACH",
+    "Bitcoin",
+    "Cash",
+    "Cheque",
+    "Credit Card",
+    "Reinvestment",
+    "Wire",
+]
+# Windows to calculate transaction frequencies for
+TIME_WINDOWS = {
+    "10s": "Tx_Last_10_Sec",
+    "30s": "Tx_Last_30_Sec",
+    "1min": "Tx_Last_1_Min",
+    "5min": "Tx_Last_5_Min",
+    "1h": "Tx_Last_1_Hour",
+    "1D": "Tx_Last_1_Day",
+    "10D": "Tx_Last_10_Days",
+}
+# Original Column names
+TIMESTAMP = "Timestamp"
+FROM_BANK = "From Bank"
+ACCOUNT = "Account"
+TO_BANK = "To Bank"
+ACCOUNT_1 = "Account.1"
+AMOUNT_RECEIVED = "Amount Received"
+RECEIVING_CURRENCY = "Receiving Currency"
+AMOUNT_PAID = "Amount Paid"
+PAYMENT_CURRENCY = "Payment Currency"
+PAYMENT_FORMAT = "Payment Format"
+IS_LAUNDERING = "Is Laundering"
+
+# Engineered Column Names
+TRANSACTION_ID = "ID"
+EVENT_TIMESTAMP = "event_timestamp"
+LABELER = "labeler"
+AMOUNT_RECEIVED_USD = "Amount_Received_USD"
+AMOUNT_PAID_USD = "Amount_Paid_USD"
+ACCOUNT_SAME = "Account_Same"
+BANK_SAME = "Bank_Same"
+ACCOUNT_PAIR = "account_pair"
+PAIR_TRANSACTION_COUNT = "pair_transaction_count"
+ACCOUNT_TRANSACTED_WITH_ACCOUNT_1_BEFORE = "Account_Transacted_With_Account1_Before"
 
 # Preprocessing Constants
 CATEGORICAL_FEATURES = ["Receiving Currency", "Payment Currency", "Payment Format"]

@@ -24,8 +24,12 @@ class FakeInferenceClient:
 
 def test_predict_returns_highest_probability():
     requests = [
-        PredictionRequest(ID=uuid4(), event_timestamp=datetime(2022, 1, 1, tzinfo=ZoneInfo("America/New_York"))),
-        PredictionRequest(ID=uuid4(), event_timestamp=datetime(2022, 1, 2, tzinfo=ZoneInfo("America/New_York"))),
+        PredictionRequest(
+            ID=uuid4(), event_timestamp=datetime(2022, 1, 1, tzinfo=ZoneInfo("America/New_York"))
+        ),
+        PredictionRequest(
+            ID=uuid4(), event_timestamp=datetime(2022, 1, 2, tzinfo=ZoneInfo("America/New_York"))
+        ),
     ]
 
     response = predict(

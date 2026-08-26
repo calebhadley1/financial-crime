@@ -108,35 +108,31 @@ class FeatureEngineer:
         )
 
         # Calculate how often Account makes a given type of Payment (e.g. cash, credit card, etc.)
-        payment_cols = [col for col in X.columns if col.startswith('Payment Format_')]
+        payment_cols = [col for col in X.columns if col.startswith("Payment Format_")]
         windows = {
-            '10s': 'Tx_Last_10_Sec',
-            '30s': 'Tx_Last_30_Sec',
-            '1min': 'Tx_Last_1_Min',
-            '5min': 'Tx_Last_5_Min',
-            '1h': 'Tx_Last_1_Hour',
-            '1D': 'Tx_Last_1_Day',
-            '10D': 'Tx_Last_10_Days'
+            "10s": "Tx_Last_10_Sec",
+            "30s": "Tx_Last_30_Sec",
+            "1min": "Tx_Last_1_Min",
+            "5min": "Tx_Last_5_Min",
+            "1h": "Tx_Last_1_Hour",
+            "1D": "Tx_Last_1_Day",
+            "10D": "Tx_Last_10_Days",
         }
-        grouped = X.groupby('Account')
+        grouped = X.groupby("Account")
         for window_size, window_label in windows.items():
             for pay_col in payment_cols:
                 # Create a clean column name (e.g., 'Payment Format_Bitcoin_last_5_min')
                 new_col_name = f"{pay_col}_Last_{window_label.replace('Tx_Last_', '')}"
-                
+
                 # Calculate the rolling sum of 1s and 0s
                 X[new_col_name] = (
-                    grouped.rolling(window_size, on='event_timestamp')
-                    [pay_col]
+                    grouped.rolling(window_size, on="event_timestamp")[pay_col]
                     .sum()  # Use .sum() because 1 + 1 + 0 = 2 transactions of this type
                     .values
                 )
         # Calculate the "All Time" number of transactions by Payment Format
         for pay_col in payment_cols:
-            X[f"{pay_col}_Tx_All_Time"] = (
-                X.groupby('Account')[pay_col]
-                .cumsum()
-            )
+            X[f"{pay_col}_Tx_All_Time"] = X.groupby("Account")[pay_col].cumsum()
 
         return X
 

@@ -14,12 +14,7 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import classification_report
 
-from financial_crime.config import (
-    RANDOM_STATE,
-    SAMPLING_STRATEGY,
-    TEST_SIZE,
-    DECISION_THRESHOLD
-)
+from financial_crime.config import DECISION_THRESHOLD, RANDOM_STATE, SAMPLING_STRATEGY, TEST_SIZE
 from financial_crime.modeling.pipelines.inference_pipeline import InferencePipeline
 from financial_crime.modeling.transformers.feature_preprocessing import FeaturePreprocessor
 
@@ -105,9 +100,7 @@ class TrainingPipeline:
         self.resampler = RandomUnderSampler(
             sampling_strategy=self.sampling_strategy, random_state=self.random_state
         )
-        X_train_resampled, y_train_resampled = self.resampler.fit_resample(
-            X_train, y_train
-        )
+        X_train_resampled, y_train_resampled = self.resampler.fit_resample(X_train, y_train)
         X_train_resampled = X_train_resampled.sort_index()
         y_train_resampled = y_train_resampled.sort_index()
         y_train_resampled_flattened = y_train_resampled.values.flatten()
@@ -210,7 +203,7 @@ class TrainingPipeline:
         logger.info("Testing pipeline on holdout set")
         y_prob = pipeline.predict_proba(X_test)[:, 1]
         y_pred = (y_prob >= DECISION_THRESHOLD).astype(int)
-        
+
         logger.info("Generating classification report...")
         report = classification_report(y_test, y_pred)
         logger.info(f"\n{report}")

@@ -14,7 +14,7 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import classification_report
 
-from financial_crime.config import DECISION_THRESHOLD, RANDOM_STATE, SAMPLING_STRATEGY, TEST_SIZE
+from financial_crime.config import COLUMNS_TO_DROP, DECISION_THRESHOLD, RANDOM_STATE, SAMPLING_STRATEGY, TEST_SIZE
 from financial_crime.modeling.pipelines.inference_pipeline import InferencePipeline
 from financial_crime.modeling.transformers.feature_preprocessing import FeaturePreprocessor
 
@@ -124,21 +124,8 @@ class TrainingPipeline:
         logger.info("Applying feature preprocessing (encoding + scaling)...")
 
         # Drop any columns that are not needed for modeling (e.g., identifiers)
-        # TODO: Find a better place to define and perform this col drop step
-        cols_to_drop = [
-            "ID",
-            "event_timestamp",
-            "Timestamp",
-            "To Bank",
-            "From Bank",
-            "Account",
-            "Account.1",
-            "labeler",
-            "account_pair",
-            "pair_transaction_count",
-        ]
-        X_train = X_train.drop(columns=cols_to_drop, errors="ignore")
-        X_test = X_test.drop(columns=cols_to_drop, errors="ignore")
+        X_train = X_train.drop(columns=COLUMNS_TO_DROP, errors="ignore")
+        X_test = X_test.drop(columns=COLUMNS_TO_DROP, errors="ignore")
 
         if fit:
             self.preprocessor = FeaturePreprocessor()

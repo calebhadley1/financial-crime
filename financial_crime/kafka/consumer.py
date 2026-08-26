@@ -21,7 +21,6 @@ def process_message(message, feature_store, account_pair_service, feature_engine
     df = pd.DataFrame([message])
     df_engineered = feature_engineer.transform(df)
 
-    # TODO add the other new feature engineering
     pair = df_engineered.iloc[0]["account_pair"]
     pair_history = feature_store.get_online_features(
         features=account_pair_service,

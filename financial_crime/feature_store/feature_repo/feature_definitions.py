@@ -27,8 +27,6 @@ account_pair = Entity(name="account_pair", join_keys=["account_pair"], value_typ
 # Read data from parquet files. Parquet is convenient for local development mode. For
 # production, you can use your favorite DWH, such as BigQuery. See Feast documentation
 # for more info.
-# TODO: We will use real time as well later via PushSource, but for now we will use a static dataset
-# TODO: Understand how we can have a batch and real time source for historical data and real time data
 transaction_source = FileSource(
     name="transaction_source",
     path="../../../data/processed/features.parquet",

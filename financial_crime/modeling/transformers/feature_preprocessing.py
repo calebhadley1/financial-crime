@@ -13,7 +13,7 @@ import pandas as pd
 from sklearn.compose import make_column_transformer
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
-from financial_crime.config import CATEGORICAL_FEATURES
+from financial_crime.config import CATEGORICAL_FEATURES, COLUMNS_TO_DROP
 
 
 class FeaturePreprocessor:
@@ -74,21 +74,8 @@ class FeaturePreprocessor:
             raise ValueError("Preprocessor must be fitted before transforming. Call fit() first.")
 
         # Drop columns that cannot be used for modeling
-        # TODO: Make this a const or a whitelist instead of blacklist
-        cols_to_drop = [
-            "ID",
-            "event_timestamp",
-            "labeler",
-            "Timestamp",
-            "From Bank",
-            "Account",
-            "To Bank",
-            "Account.1",
-            "account_pair",
-            "pair_transaction_count",
-        ]
-        logger.debug(f"Dropping columns: {cols_to_drop}")
-        X = X.drop(cols_to_drop, axis=1, errors="ignore")
+        logger.debug(f"Dropping columns: {COLUMNS_TO_DROP}")
+        X = X.drop(COLUMNS_TO_DROP, axis=1, errors="ignore")
 
         X_encoded = self.preprocessor.transform(X)
         X_scaled = self.scaler.transform(X_encoded)

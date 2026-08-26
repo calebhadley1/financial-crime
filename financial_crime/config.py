@@ -90,6 +90,18 @@ ACCOUNT_TRANSACTED_WITH_ACCOUNT_1_BEFORE = "Account_Transacted_With_Account1_Bef
 
 # Preprocessing Constants
 CATEGORICAL_FEATURES = ["Receiving Currency", "Payment Currency", "Payment Format"]
+COLUMNS_TO_DROP = [
+    "ID",
+    "event_timestamp",
+    "Timestamp",
+    "To Bank",
+    "From Bank",
+    "Account",
+    "Account.1",
+    "labeler",
+    "account_pair",
+    "pair_transaction_count",
+]
 
 # Model Training Constants
 RANDOM_STATE = 42
